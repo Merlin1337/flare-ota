@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.cloudflare/
+.wrangler/
+coverage/
+*.log
+
+# Secrets never live in the repo: keys, env files, secret bundles.
+.env
+.env.*
+!.env.example
+.dev.vars
+.keys/
+*.pem
+!examples/expo-app/certs/certificate.pem
+secrets.*.json

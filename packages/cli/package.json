@@ -1,0 +1,42 @@
+{
+  "name": "flare-ota",
+  "version": "0.1.0",
+  "description": "Self-hosted OTA updates for Expo on Cloudflare: publish, roll out, roll back, preview and MCP from the CLI.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "flare-ota": "./dist/cli.js"
+  },
+  "exports": {
+    "./expo": {
+      "types": "./dist/expo.d.ts",
+      "default": "./dist/expo.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "keywords": ["expo", "ota", "expo-updates", "cloudflare", "workers", "codepush", "eas-update", "self-hosted", "mcp"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Merlin1337/flare-ota.git",
+    "directory": "packages/cli"
+  },
+  "scripts": {
+    "build": "node build.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "expo-updates": ">=0.28.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-updates": { "optional": true }
+  },
+  "devDependencies": {
+    "@flare-ota/core": "workspace:*",
+    "esbuild": "0.28.2",
+    "qrcode-generator": "2.0.4"
+  }
+}

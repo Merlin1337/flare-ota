@@ -1,0 +1,29 @@
+{
+  "name": "@flare-ota/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cf dev",
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "setup": "node scripts/setup.ts",
+    "deploy": "node scripts/deploy.ts",
+    "migrate": "node scripts/migrate.ts",
+    "bootstrap-token": "node scripts/bootstrap-token.ts",
+    "access": "node scripts/access.ts",
+    "waf": "node scripts/waf.ts",
+    "deploy-token": "node scripts/deploy-token.ts",
+    "doctor": "node scripts/doctor.ts"
+  },
+  "dependencies": {
+    "@flare-ota/core": "workspace:*",
+    "hono": "4.13.13",
+    "qrcode-generator": "2.0.4"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.0",
+    "cf": "1.0.0-beta.21",
+    "vite": "8.3.4"
+  }
+}

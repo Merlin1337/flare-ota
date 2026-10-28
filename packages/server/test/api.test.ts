@@ -306,3 +306,19 @@ describe("garbage collection", () => {
     expect((await check()).json.launchAsset).toBeDefined();
   });
 });
+
+describe("device write budget", () => {
+  it("does not rewrite an unchanged device on every check", async () => {
+    const group = await publishBundle("x");
+    const client = crypto.randomUUID();
+    const { Store } = await import("../src/store.ts");
+    const store = new Store(h.db);
+    const device = {
+      clientId: client, platform: "ios" as const, runtimeVersion: "rt-1", channel: "production",
+      currentUpdateId: group.updates[0]!.id, embeddedUpdateId: null, servedUpdateId: null, appVersion: null, country: null, failedUpdateIds: [], fatalError: null,
+    };
+    expect(await store.recordCheck(device)).toBe(true);
+    expect(await store.recordCheck(device)).toBe(false);
+    expect(await store.recordCheck({ ...device, currentUpdateId: null })).toBe(true);
+  });
+});

@@ -310,8 +310,29 @@ export class Store {
     country: string | null;
     failedUpdateIds: string[];
     fatalError: string | null;
-  }): Promise<void> {
+  }): Promise<boolean> {
     const at = now();
+    // One cheap read saves most writes: D1 bills each written row and index entry, so an
+    // unchanged device is refreshed at most every 6 hours (enough for "active" counts).
+    if (device.failedUpdateIds.length === 0) {
+      const known = await this.db
+        .prepare("SELECT platform, runtime_version, channel, current_update_id, embedded_update_id, served_update_id, app_version, last_seen_at FROM devices WHERE client_id = ?")
+        .bind(device.clientId)
+        .first<{ platform: string; runtime_version: string; channel: string; current_update_id: string | null; embedded_update_id: string | null; served_update_id: string | null; app_version: string | null; last_seen_at: string }>();
+      if (
+        known &&
+        known.platform === device.platform &&
+        known.runtime_version === device.runtimeVersion &&
+        known.channel === device.channel &&
+        known.current_update_id === device.currentUpdateId &&
+        known.embedded_update_id === device.embeddedUpdateId &&
+        (device.servedUpdateId === null || known.served_update_id === device.servedUpdateId) &&
+        (device.appVersion === null || known.app_version === device.appVersion) &&
+        known.last_seen_at > ago(6 * 60 * 60 * 1000)
+      ) {
+        return false;
+      }
+    }
     const statements = [
       this.db
         .prepare(
@@ -335,6 +356,7 @@ export class Store {
       );
     }
     await this.db.batch(statements);
+    return true;
   }
 
   // ---- metrics ----

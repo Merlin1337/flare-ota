@@ -1,0 +1,23 @@
+{
+  "name": "flare-ota-example",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "ios:release": "expo run:ios --configuration Release",
+    "android:release": "expo run:android --variant release"
+  },
+  "dependencies": {
+    "expo": "~58.0.20",
+    "expo-linking": "~58.0.14",
+    "expo-status-bar": "~58.0.4",
+    "expo-updates": "~58.0.19",
+    "react": "19.3.0",
+    "react-native": "0.88.0"
+  },
+  "devDependencies": {
+    "flare-ota": "file:../../packages/cli",
+    "typescript": "~6.0.3",
+    "@types/react": "~19.3.0"
+  }
+}

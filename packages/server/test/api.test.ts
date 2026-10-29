@@ -301,6 +301,21 @@ describe("dashboard", () => {
     expect(nullOrigin.status).toBe(403);
   });
 
+  it("shows what a rollback would do before doing it", async () => {
+    const local = await harness({ INSECURE_DASHBOARD: "1" });
+    const ci = await local.token("publish");
+    for (const message of ["Good build", "Bad build"]) {
+      const ios = await uploadBundle(local, ci, message);
+      await publish(local, ci, { branch: "production", message, updates: { ios } });
+    }
+    const confirm = await local.fetch("/confirm/rollback?branch=production&to=previous", { host: "admin.test" });
+    const html = await confirm.text();
+    expect(html).toContain("Good build");
+    expect(html).toContain("Roll back now");
+    const groups = local.db.raw.prepare("SELECT COUNT(*) AS n FROM update_groups").get() as { n: number };
+    expect(groups.n).toBe(2);
+  });
+
   it("accepts a same-site form post even when the browser withholds Origin", async () => {
     const local = await harness({ INSECURE_DASHBOARD: "1" });
     const post = await local.fetch("/actions/channel", {

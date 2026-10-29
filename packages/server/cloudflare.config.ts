@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => {
   const updatesHost = env("FLARE_OTA_UPDATES_HOST");
   const dashboardHost = env("FLARE_OTA_DASHBOARD_HOST");
   const vars: Record<string, ReturnType<typeof bindings.text>> = {};
-  for (const key of ["DASHBOARD_HOST", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "APP_SCHEME"] as const) {
-    const value = key === "DASHBOARD_HOST" ? dashboardHost : env(`FLARE_OTA_${key}`);
+  for (const key of ["DASHBOARD_HOST", "UPDATES_HOST", "ACCESS_TEAM_DOMAIN", "ACCESS_AUD", "APP_SCHEME"] as const) {
+    const value = key === "DASHBOARD_HOST" ? dashboardHost : key === "UPDATES_HOST" ? updatesHost : env(`FLARE_OTA_${key}`);
     if (value) vars[key] = bindings.text(value);
   }
   return {

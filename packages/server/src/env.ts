@@ -50,6 +50,8 @@ export interface Env {
   /** HMAC secret for preview links. */
   PREVIEW_SECRET?: string;
 
+  /** Hostname devices use, e.g. ota.example.com (shown in the dashboard's setup commands). */
+  UPDATES_HOST?: string;
   /** Hostname that serves the dashboard behind Cloudflare Access, e.g. ota-admin.example.com. */
   DASHBOARD_HOST?: string;
   /** Your Access team domain, e.g. myteam.cloudflareaccess.com. */

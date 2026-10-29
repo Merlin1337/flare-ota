@@ -41,15 +41,15 @@ nav{display:grid;gap:4px}
 nav a{position:relative;display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;color:var(--fg2);font-weight:550;font-size:15px;transition:background .2s,color .2s}
 nav a svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7}
 nav a:hover{color:var(--fg);background:var(--raise)}
-nav a.on{color:var(--fg);background:linear-gradient(90deg,rgba(255,122,26,.20),rgba(255,122,26,.03) 75%);box-shadow:inset 0 0 0 1px rgba(255,122,26,.18)}
-nav a.on::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+nav a.on{color:var(--fg);background:linear-gradient(90deg,rgba(255,122,26,.14),rgba(255,122,26,.02) 75%)}
+nav a.on::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
 nav a.on svg{stroke:var(--accent)}
 .status{margin-top:22px;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--panel)}
 .status b{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650}.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;overflow:hidden;text-overflow:ellipsis}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--okBg),0 0 12px var(--ok)}
-.dot.live{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 7px transparent,0 0 12px var(--ok)}}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--okBg)}
+.dot.live{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 6px transparent}}
 .me{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--panel)}
-.avatar{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:14px;color:var(--accentInk);background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px -6px var(--accent)}
+.avatar{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:14px;color:var(--accentInk);background:linear-gradient(135deg,var(--accent2),var(--accent))}
 .me small{display:block;color:var(--muted);font-size:12px}.me div span{display:block;font-size:13.5px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
 main{position:relative;overflow:hidden;padding:10px 26px 60px;max-width:1380px;width:100%}
 .topbar{display:flex;align-items:center;gap:14px;margin-bottom:34px}
@@ -60,7 +60,7 @@ main{position:relative;overflow:hidden;padding:10px 26px 60px;max-width:1380px;w
 .crumb{font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:550}
 h1{margin:0;font-weight:750;font-size:30px;line-height:1.1;letter-spacing:-.035em}
 .display{font-size:58px;line-height:1.02;letter-spacing:-.05em;font-weight:780}.display.sm{font-size:44px}
-.grad{background:linear-gradient(100deg,var(--accent) 10%,var(--accent2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 30px rgba(255,122,26,.35))}
+.grad{background:linear-gradient(100deg,var(--accent) 10%,var(--accent2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:17px;color:var(--fg2);margin:14px 0 0;max-width:720px}
 .sub{color:var(--muted);margin:8px 0 0}
 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px}
@@ -78,13 +78,13 @@ h1{margin:0;font-weight:750;font-size:30px;line-height:1.1;letter-spacing:-.035e
 .tabs{display:inline-flex;gap:4px;padding:5px;border:1px solid var(--line);border-radius:18px;background:var(--panel);margin-bottom:18px}
 .tabs a{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:13px;font-weight:650;font-size:14.5px;color:var(--muted);transition:color .2s}
 .tabs a:hover{color:var(--fg)}.tabs a span{font-size:12px;padding:1px 8px;border-radius:99px;background:var(--raise);color:var(--muted)}
-.tabs a.on{color:var(--fg);background:linear-gradient(180deg,rgba(255,122,26,.22),rgba(255,122,26,.08));box-shadow:inset 0 0 0 1px rgba(255,122,26,.45),0 10px 30px -14px var(--accent)}
-.tabs a.on span{background:rgba(255,122,26,.25);color:var(--fg)}
+.tabs a.on{color:var(--fg);background:var(--raise);box-shadow:inset 0 0 0 1px var(--line2)}
+.tabs a.on span{background:var(--accent);color:var(--accentInk)}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
 .rcard{display:flex;flex-direction:column;gap:18px;padding:20px;transition:transform .25s,border-color .25s}
 .rcard:hover{transform:translateY(-2px)}
-.rcard.roll{border-color:rgba(255,181,71,.45);background:radial-gradient(120% 80% at 50% 0%,rgba(255,181,71,.10),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));box-shadow:0 0 0 1px rgba(255,181,71,.08),0 20px 50px -30px rgba(255,140,40,.6)}
+.rcard.roll{border-color:rgba(255,181,71,.45);background:radial-gradient(120% 80% at 50% 0%,rgba(255,181,71,.10),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
 .rcard.live{border-color:rgba(61,220,151,.22)}.rcard.back{border-color:rgba(255,107,107,.35)}.rcard.paused{opacity:.82}
 .rhead{display:flex;align-items:flex-start;gap:14px}
 .rav{position:relative;width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:18px;background:var(--raise);border:1px solid var(--line2)}
@@ -101,7 +101,7 @@ h1{margin:0;font-weight:750;font-size:30px;line-height:1.1;letter-spacing:-.035e
 .plat .pv{font-size:26px;font-weight:760;letter-spacing:-.04em;color:var(--fg);margin:2px 0 10px;font-variant-numeric:tabular-nums}
 .plat.ios .pv{color:var(--ios)}.plat.android .pv{color:var(--android)}
 .track{height:6px;border-radius:99px;background:var(--raise);overflow:hidden}.track i{display:block;height:100%;border-radius:99px}
-.ios .track i,.track.ios i{background:linear-gradient(90deg,transparent,var(--ios));box-shadow:0 0 12px var(--ios)}.android .track i,.track.android i{background:linear-gradient(90deg,transparent,var(--android));box-shadow:0 0 12px var(--android)}
+.ios .track i,.track.ios i{background:var(--ios)}.android .track i,.track.android i{background:var(--android)}
 .kv4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .kv4 div{font-size:12px;color:var(--muted);font-weight:600}.kv4 b{display:block;font-size:17px;color:var(--fg);font-weight:720;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
 .kv4 b.bad{color:var(--bad)}
@@ -119,19 +119,19 @@ h1{margin:0;font-weight:750;font-size:30px;line-height:1.1;letter-spacing:-.035e
 .li .grow{min-width:0}.li .mini{width:84px}
 .feed{padding:2px 22px 14px}.ev{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}.ev:first-child{border-top:0}
 .ev .ic{width:30px;height:30px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--raise);border:1px solid var(--line)}
-.ev .ic i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.ev .ic.pub i{background:var(--accent);box-shadow:0 0 10px var(--accent)}.ev .ic.roll i{background:var(--warn);box-shadow:0 0 10px var(--warn)}.ev .ic.back i{background:var(--bad);box-shadow:0 0 10px var(--bad)}.ev .ic.ok i{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.ev .ic i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.ev .ic.pub i{background:var(--accent)}.ev .ic.roll i{background:var(--warn)}.ev .ic.back i{background:var(--bad)}.ev .ic.ok i{background:var(--ok)}
 .ev p{margin:0;font-size:13.5px;color:var(--fg2);line-height:1.45}.ev p b{color:var(--fg);font-weight:650}.ev small{color:var(--muted);font-size:12px}
 form{display:inline-flex;gap:8px;align-items:center;margin:0}
 input,select,button,.btn{font:inherit;font-size:13.5px;height:40px;padding:0 14px;border:1px solid var(--line2);border-radius:12px;background:var(--panel);color:var(--fg)}
 input::placeholder{color:var(--muted)}
 select{-webkit-appearance:none;appearance:none;padding-right:36px;cursor:pointer;background-repeat:no-repeat;background-position:right 13px center;background-size:12px;
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23a39b93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
-input:focus,select:focus{outline:none;border-color:rgba(255,122,26,.6);box-shadow:0 0 0 4px var(--glow)}
+input:focus,select:focus{outline:none;border-color:rgba(255,122,26,.55);box-shadow:0 0 0 3px rgba(255,122,26,.12)}
 button,.btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:650;background:var(--raise);transition:transform .15s,box-shadow .2s,border-color .2s}
 button:hover,.btn:hover{border-color:var(--faint)}button:active{transform:translateY(1px)}
 .btn svg,button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
-.primary{background:linear-gradient(180deg,#ff9a3c,var(--accent));border-color:rgba(255,160,80,.6);color:var(--accentInk);box-shadow:0 10px 28px -10px var(--accent),inset 0 1px 0 rgba(255,255,255,.35)}
-.primary:hover{box-shadow:0 14px 34px -10px var(--accent),inset 0 1px 0 rgba(255,255,255,.35)}
+.primary{background:var(--accent);border-color:transparent;color:var(--accentInk);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.primary:hover{background:#ff8a35;border-color:transparent}
 .danger{color:var(--bad)}.ghost{background:transparent}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;padding:16px 22px;border-top:1px solid var(--line)}
 .flash{display:flex;gap:24px;align-items:center;padding:22px;margin-bottom:22px;border:1px solid rgba(255,122,26,.4);background:radial-gradient(120% 140% at 0% 0%,var(--glow),transparent 60%),var(--panel);border-radius:22px;word-break:break-all}
@@ -149,6 +149,25 @@ td{padding:15px 22px;border-top:1px solid var(--line);color:var(--fg2);vertical-
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
 .stack{display:grid;gap:18px;align-content:start}
 .flare{position:absolute;right:-40px;top:-120px;width:700px;height:460px;pointer-events:none}
+.help{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:750;color:var(--muted);border:1px solid var(--line2);cursor:help;margin-left:4px;vertical-align:1px}
+.onboard{padding:24px 26px;margin:30px 0 8px;border-color:rgba(255,122,26,.35);background:radial-gradient(120% 140% at 0% 0%,rgba(255,122,26,.12),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
+.onboard header{display:flex;align-items:center;gap:16px;margin-bottom:18px}.onboard h2{margin:0;font-size:20px;font-weight:750;letter-spacing:-.025em}.onboard header p{margin:3px 0 0;color:var(--muted);font-size:14px}
+.progress{margin-left:auto;min-width:170px;text-align:right;font-size:13px;color:var(--muted);font-weight:600}.progress .track{margin-top:8px;height:7px}.progress .track i{background:var(--accent)}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.step{padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:10px;min-width:0}
+.step.done{opacity:.6}.step.next{border-color:rgba(255,122,26,.5)}
+.step .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:13px;background:var(--raise);border:1px solid var(--line2)}
+.step.done .n{background:var(--okBg);color:var(--ok);border-color:rgba(61,220,151,.4)}.step.next .n{background:var(--accent);color:var(--accentInk);border:0}
+.step b{font-size:14.5px;font-weight:700}.step p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.5}
+pre.cmd{margin:0;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.35);border:1px solid var(--line);font:12px/1.55 var(--mono);color:var(--fg2);white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere}
+@media (prefers-color-scheme:light){pre.cmd{background:#f3f0ec}}
+pre.cmd .c{color:var(--muted)}pre.cmd .p{color:var(--accent)}
+.alert{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--badBg);border:1px solid rgba(255,107,107,.3);color:var(--bad);font-size:12.5px;font-weight:600}
+.alert span{flex:1}.alert button{height:32px;font-size:12.5px}
+.confirm{max-width:720px;padding:26px}.confirm h2{margin:0 0 6px;font-size:22px;font-weight:750;letter-spacing:-.03em}.confirm .targets{display:grid;gap:10px;margin:18px 0 22px}
+.confirm .t{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}.confirm .t b{display:block}.confirm .t small{color:var(--muted)}
+.confirm .acts{display:flex;gap:10px}
+@media (max-width:1180px){.steps{grid-template-columns:1fr 1fr}}
 @media (max-width:1180px){.stats{grid-template-columns:1fr 1fr}.layout,.grid{grid-template-columns:1fr}}
 @media (max-width:760px){.app{grid-template-columns:1fr;padding:10px}aside{position:static;height:auto}main{padding:14px 4px}.display{font-size:40px}.platforms,.duo{grid-template-columns:1fr}.search{flex-basis:auto}}`;
 
@@ -228,14 +247,14 @@ function sparkline(values: number[]): string {
 <path d="${d} L${w},${h} L0,${h} Z" fill="url(#sg)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
 }
 
-function ring(percent: number, size = 64, color = "var(--accent)"): string {
+function ring(percent: number | null, size = 64, color = "var(--accent)"): string {
   const r = size / 2 - 6;
   const c = 2 * Math.PI * r;
-  const dash = (Math.min(100, Math.max(0, percent)) / 100) * c;
+  const dash = (Math.min(100, Math.max(0, percent ?? 0)) / 100) * c;
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="flex:none">
 <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--raise)" stroke-width="6"/>
-<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${dash} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/>
-<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="${size / 4.6}" font-weight="650" font-family="-apple-system,Inter,sans-serif">${percent}%</text></svg>`;
+${percent ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${dash} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/>` : ""}
+<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="${size / 4.6}" font-weight="650" font-family="Jakarta,-apple-system,sans-serif">${percent === null ? "—" : `${percent}%`}</text></svg>`;
 }
 
 function donut(parts: { value: number; color: string }[], size = 116): string {
@@ -298,8 +317,33 @@ function releaseCard(group: GroupSummary, metrics: UpdateMetrics[]): string {
   return `<article class="card rcard ${cls}"><div class="rhead"><span class="rav">${esc((group.message || "?").trim()[0]?.toUpperCase() ?? "?")}<i></i></span>
 <div class="grow"><h3>${esc(group.message || "(no message)")}</h3><small><span class="mono">${esc(group.id.slice(0, 8))}</span> · ${esc(actorName(group.actor))} · ${esc(since(group.createdAt))}</small></div><span class="badge">${esc(badge)}</span></div>
 <div class="duo">${platformTile(of("ios"), "iOS", "ios")}${platformTile(of("android"), "Android", "android")}</div>
-<div class="kv4"><div>Running<b>${num(running)}</b></div><div>Served<b>${num(served)}</b></div><div>Failed<b class="${failed ? "bad" : ""}">${num(failed)}</b></div></div>
+<div class="kv4"><div title="Devices running this release right now">Running<b>${num(running)}</b></div><div title="Devices this release was last offered to (downloads in progress included)">Offered<b>${num(served)}</b></div><div title="Devices where this release failed to launch. They are never offered it again.">Failed<b class="${failed ? "bad" : ""}">${num(failed)}</b></div></div>
+${failed && cls !== "paused" && cls !== "back" ? `<div class="alert"><span>${num(failed)} device${failed === 1 ? "" : "s"} could not launch this release.</span><form method="post" action="/actions/pause">${hidden}<button class="danger">Pause it</button></form></div>` : ""}
 <div class="ract"><a class="btn" href="/groups/${esc(group.id)}">${ICON.open}View details</a>${action}</div></article>`;
+}
+
+
+const help = (text: string) => `<span class="help" title="${esc(text)}">?</span>`;
+
+function onboarding(state: { token: boolean; device: boolean; published: boolean }, updatesHost: string): string {
+  const url = `https://${updatesHost || "<your-updates-host>"}`;
+  const steps = [
+    { done: state.token, title: "Create a publish token", text: "For your laptop and CI. flare-ota only stores its hash.", body: `<a class="btn" href="/tokens">${ICON.tokens}Create token</a>` },
+    { done: state.device, title: "Connect your Expo app", text: "Copy <code>certificate.pem</code> printed by setup into <code>certs/</code>, then:", body: `<pre class="cmd">npx expo install expo-updates\nnpm i -D flare-ota\nFLARE_OTA_URL=${esc(url)} \\\n  npx flare-ota init</pre>` },
+    { done: state.device, title: "Build a release binary", text: "The update URL and certificate live in the binary. Ticks itself when a device checks in.", body: `<pre class="cmd"><span class="c"># or EAS Build, Xcode, CI…</span>\nnpx expo run:ios --configuration Release</pre>` },
+    { done: state.published, title: "Publish your first update", text: "Change some JavaScript, then ship it. Devices get it on their next launches.", body: `<pre class="cmd">export FLARE_OTA_TOKEN=fota_…\nnpx flare-ota publish \\\n  --branch production -m "First OTA"</pre>` },
+  ];
+  const done = steps.filter((x) => x.done).length;
+  const next = steps.findIndex((x) => !x.done);
+  return `<section class="card onboard"><header><div><h2>Get your first update out</h2><p>Four steps, about 20 minutes. This panel disappears once updates flow.</p></div>
+<div class="progress">${done} of 4 done<div class="track"><i style="width:${(done / 4) * 100}%"></i></div></div></header>
+<div class="steps">${steps.map((x, i) => `<div class="step ${x.done ? "done" : i === next ? "next" : ""}"><span class="n">${x.done ? "✓" : i + 1}</span><b>${x.title}</b><p>${x.text}</p>${x.done ? "" : x.body}</div>`).join("")}</div></section>`;
+}
+
+function publishPanel(branch: string, updatesHost: string): string {
+  return `<div class="card"><div class="ch"><h2>Publish an update</h2>${help("Updates are built from your app's code on your machine or CI, then uploaded here. The dashboard never touches your source.")}</div>
+<div style="padding:0 22px 20px"><pre class="cmd"><span class="c"># in your app's folder</span>\nexport FLARE_OTA_TOKEN=fota_…\nnpx flare-ota publish \\\n  --branch ${esc(branch)} \\\n  -m "What changed"</pre>
+<p class="sub" style="font-size:12.5px;margin-top:10px">Server: <span class="mono">https://${esc(updatesHost || "<updates-host>")}</span> (<span class="mono">FLARE_OTA_URL</span>). Add <span class="mono">--rollout 10</span> to start with 10% of devices.</p></div></div>`;
 }
 
 // ---- activity feed ----
@@ -332,8 +376,8 @@ function feed(entries: AuditEntry[], groups: Map<string, GroupSummary>): string 
 
 // ---- pages ----
 
-async function overviewPage(store: Store, actor: string, host: string, branchParam: string | null, query: string | null): Promise<Response> {
-  const [overview, activity, audit] = await Promise.all([store.overview(), store.activity(), store.auditLog(6)]);
+async function overviewPage(store: Store, env: Env, actor: string, host: string, branchParam: string | null, query: string | null): Promise<Response> {
+  const [overview, activity, audit, tokens] = await Promise.all([store.overview(), store.activity(), store.auditLog(6), store.listTokens()]);
   const branches = [...new Set(overview.channels.map((c) => c.branch))].sort((x, y) => (x === "production" ? -1 : y === "production" ? 1 : x.localeCompare(y)));
   const branch = branchParam && branches.includes(branchParam) ? branchParam : branches[0] ?? "production";
   const q = (query ?? "").trim().slice(0, 80);
@@ -357,6 +401,9 @@ async function overviewPage(store: Store, actor: string, host: string, branchPar
   const byPlatform = (p: string) => overview.runtimes.filter((r) => r.platform === p).reduce((s, r) => s + r.devices, 0);
   const ios = byPlatform("ios");
   const android = byPlatform("android");
+  const hasPublishToken = tokens.some((t) => !t.revokedAt && t.scope === "publish");
+  const published = perBranch.some((p) => p.groups.length > 0);
+  const setupDone = hasPublishToken && overview.devices.last30d > 0 && published;
   const tabs = branches
     .map((b) => `<a class="${b === branch ? "on" : ""}" href="/?branch=${encodeURIComponent(b)}${q ? `&q=${encodeURIComponent(q)}` : ""}">${esc(b[0]!.toUpperCase() + b.slice(1))}<span>${perBranch.find((p) => p.branch === b)?.groups.length ?? 0}</span></a>`)
     .join("");
@@ -368,23 +415,47 @@ async function overviewPage(store: Store, actor: string, host: string, branchPar
 <span class="livepill"><span class="dot live"></span>Live · ${new Date().toISOString().slice(11, 16)} UTC</span></div>
 <h1 class="display">Release <span class="grad">control</span></h1>
 <p class="lead">Ship JavaScript to every device in minutes. Watch it spread, and roll it back in one click.</p>
+${setupDone ? "" : onboarding({ token: hasPublishToken, device: overview.devices.last30d > 0, published }, env.UPDATES_HOST ?? "")}
 <div class="stats">
-<div class="card stat hero"><div class="l">Active devices · 24 h</div><div class="v">${num(overview.devices.last24h)}</div><div class="h"><b>${num(overview.devices.last30d)}</b> in the last 30 days</div>${sparkline(activity.hourly)}</div>
-<div class="card stat"><div class="l">Live in production</div><div class="ringrow">${ring(pct(liveRunning, livePopulation), 66)}<div class="t"><b>${esc(live?.message ?? "Nothing live yet")}</b>${live ? `${num(liveRunning)} of ${num(livePopulation)} devices` : ""}</div></div></div>
-<div class="card stat"><div class="l">Rollouts in progress</div><div class="v" style="color:${rolling.length ? "var(--warn)" : "var(--fg)"}">${rolling.length}</div><div class="h">${rolling.length ? `${esc(rolling[0]!.message)} · <b>${Math.max(...rolling[0]!.updates.map((u) => u.rolloutPercent))}%</b>` : "Everything fully rolled out"}</div></div>
-<div class="card stat"><div class="l">Failed launches · 7 d</div><div class="v ${activity.failed7d ? "bad" : ""}">${num(activity.failed7d)}</div><div class="h">${activity.failed7d ? "Never re-offered to those devices" : "No launch failures reported"}</div></div></div>
+<div class="card stat hero"><div class="l">Active devices · 24 h${help("Installs that checked for an update in the last 24 hours (one check per app launch).")}</div><div class="v">${num(overview.devices.last24h)}</div><div class="h"><b>${num(overview.devices.last30d)}</b> in the last 30 days</div>${sparkline(activity.hourly)}</div>
+<div class="card stat"><div class="l">Live in production${help("The newest production release at 100%: the share of eligible devices already running it.")}</div><div class="ringrow">${ring(live ? pct(liveRunning, livePopulation) : null, 66)}<div class="t"><b>${esc(live?.message ?? "Nothing live yet")}</b>${live ? `${num(liveRunning)} of ${num(livePopulation)} devices` : ""}</div></div></div>
+<div class="card stat"><div class="l">Rollouts in progress${help("Releases offered to only part of your users. Raise them when the numbers look healthy.")}</div><div class="v" style="color:${rolling.length ? "var(--warn)" : "var(--fg)"}">${rolling.length}</div><div class="h">${rolling.length ? `${esc(rolling[0]!.message)} · <b>${Math.max(...rolling[0]!.updates.map((u) => u.rolloutPercent))}%</b>` : "Everything fully rolled out"}</div></div>
+<div class="card stat"><div class="l">Failed launches · 7 d${help("Launches expo-updates reported as failed. Such a device falls back and is never offered that release again.")}</div><div class="v ${activity.failed7d ? "bad" : ""}">${num(activity.failed7d)}</div><div class="h">${activity.failed7d ? "Never re-offered to those devices" : "No launch failures reported"}</div></div></div>
 <div class="layout"><div><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div class="tabs">${tabs}</div><span class="grow"></span>
-<form method="post" action="/actions/rollback" style="margin-bottom:18px"><input type="hidden" name="branch" value="${esc(branch)}"><select name="to"><option value="previous">Previous bundle</option><option value="embedded">Embedded bundle</option></select><button class="danger">Roll back ${esc(branch)}</button></form></div>
+<form method="get" action="/confirm/rollback" style="margin-bottom:18px" title="You will see exactly what changes before anything happens."><input type="hidden" name="branch" value="${esc(branch)}"><select name="to"><option value="previous">To the previous release</option><option value="embedded">To the app's built-in code</option></select><button class="danger">Roll back…</button></form></div>
 <div class="cards">${shown.map((g) => releaseCard(g, current.metrics)).join("") || `<div class="card empty" style="grid-column:1/-1">${q ? `No release on ${esc(branch)} matches “${esc(q)}”.` : `Nothing published on ${esc(branch)} yet. Run <code>npx flare-ota publish --branch ${esc(branch)}</code>.`}</div>`}</div></div>
 <div class="stack">
-<div class="card"><div class="ch"><h2>Fleet</h2><span class="grow"></span><small>30 days</small></div><div class="fleet">${donut([{ value: ios, color: "var(--ios)" }, { value: android, color: "var(--android)" }])}
-<div class="legend"><div><span class="sw" style="background:var(--ios);box-shadow:0 0 10px var(--ios)"></span>iOS<b>${num(ios)}</b></div><div><span class="sw" style="background:var(--android);box-shadow:0 0 10px var(--android)"></span>Android<b>${num(android)}</b></div></div></div>
+${published ? publishPanel(branch, env.UPDATES_HOST ?? "") : ""}
+<div class="card"><div class="ch"><h2>Fleet</h2>${help("Installs seen in the last 30 days, by platform and by app build. Each native build has a fingerprint; an update only reaches builds with the same one.")}<span class="grow"></span><small>30 days</small></div><div class="fleet">${donut([{ value: ios, color: "var(--ios)" }, { value: android, color: "var(--android)" }])}
+<div class="legend"><div><span class="sw" style="background:var(--ios)"></span>iOS<b>${num(ios)}</b></div><div><span class="sw" style="background:var(--android)"></span>Android<b>${num(android)}</b></div></div></div>
 <div class="list">${runtimeRows || '<div class="li" style="color:var(--muted)">No device has checked in yet.</div>'}</div></div>
 <div class="card"><div class="ch"><h2>Activity</h2><span class="grow"></span><a class="tag" href="/audit">View all</a></div>${feed(audit, allGroups)}</div>
-<div class="card"><div class="ch"><h2>Channels</h2></div><div class="list">${overview.channels.map((c) => `<div class="li"><span class="grow" style="font-weight:600">${esc(c.name)}</span><span style="color:var(--muted)">→</span><span class="tag">${esc(c.branch)}</span></div>`).join("")}</div>
+<div class="card"><div class="ch"><h2>Channels</h2>${help("Your app asks for a channel (set at build time). Each channel serves one branch. Most apps never change this.")}</div><div class="list">${overview.channels.map((c) => `<div class="li"><span class="grow" style="font-weight:600">${esc(c.name)}</span><span style="color:var(--muted)">→</span><span class="tag">${esc(c.branch)}</span></div>`).join("")}</div>
 <div class="toolbar"><form method="post" action="/actions/channel"><input name="channel" placeholder="channel" required style="width:100px"><input name="branch" placeholder="branch" required style="width:100px"><button>Point</button></form></div></div>
 </div></div>`;
   return page("Releases", actor, body, "/", host);
+}
+
+async function confirmRollback(store: Store, actor: string, host: string, params: URLSearchParams): Promise<Response> {
+  const branch = params.get("branch") ?? "";
+  const to = params.get("to") === "embedded" ? "embedded" : "previous";
+  const platform = params.get("platform");
+  const targets = await store.rollbackTargets(branch, platform && isPlatform(platform) ? platform : null);
+  const label = (p: string) => (p === "ios" ? "iOS" : "Android");
+  const rows = await Promise.all(
+    targets.map(async (t) => {
+      if (to === "embedded") return `<div class="t"><span class="chip back">${label(t.platform)}</span><div><b>Back to the code built into the app</b><small>Devices drop every OTA update and run what shipped in their binary.</small></div></div>`;
+      if (!t.target) return `<div class="t"><span class="chip paused">${label(t.platform)}</span><div><b>No earlier release to go back to</b><small>Choose “the app's built-in code” instead.</small></div></div>`;
+      const source = await store.group(t.target.groupId);
+      return `<div class="t"><span class="chip live">${label(t.platform)}</span><div><b>${esc(source?.message || t.target.groupId.slice(0, 8))}</b><small>published ${esc(since(t.target.createdAt))} · re-sent to every device as a new update</small></div></div>`;
+    }),
+  );
+  const blocked = to === "previous" && targets.some((t) => !t.target);
+  const body = `<div class="crumb"><a href="/?branch=${encodeURIComponent(branch)}">Releases</a> · ${esc(branch)}</div>
+<section class="card confirm"><h2>Roll back ${esc(branch)}?</h2><p class="sub" style="margin:0">Every device on this branch moves to what is listed below on its next launches. Nothing is deleted: you can publish again at any time.</p>
+<div class="targets">${rows.join("") || `<div class="t"><div><b>Nothing is published on ${esc(branch)}.</b></div></div>`}</div>
+<div class="acts">${targets.length && !blocked ? `<form method="post" action="/actions/rollback"><input type="hidden" name="branch" value="${esc(branch)}"><input type="hidden" name="to" value="${to}">${platform ? `<input type="hidden" name="platform" value="${esc(platform)}">` : ""}<button class="primary" style="background:var(--bad)">Roll back now</button></form>` : ""}<a class="btn" href="/?branch=${encodeURIComponent(branch)}">Cancel</a></div></section>`;
+  return page(`Roll back ${branch}`, actor, body, "/", host);
 }
 
 async function groupPage(store: Store, actor: string, id: string, host: string, flash = ""): Promise<Response> {
@@ -399,7 +470,7 @@ async function groupPage(store: Store, actor: string, id: string, host: string, 
   const card = (platform: string, label: string, color: string) => {
     const m = metrics.find((x) => x.platform === platform);
     if (!m) return `<div class="card pcard"><div class="t"><b>${label}</b><div class="big muted">—</div><small>Not part of this release</small></div></div>`;
-    return `<div class="card pcard">${ring(pct(m.running, m.population), 84, color)}<div class="t"><b>${label}</b><div class="big num">${num(m.running)}</div><small>running of ${num(m.population)} eligible · ${num(m.served)} served · <span class="${m.failed ? "bad" : ""}">${num(m.failed)} failed</span></small></div></div>`;
+    return `<div class="card pcard">${ring(pct(m.running, m.population), 84, color)}<div class="t"><b>${label}</b><div class="big num">${num(m.running)}</div><small>running of ${num(m.population)} eligible · ${num(m.served)} offered · <span class="${m.failed ? "bad" : ""}">${num(m.failed)} failed</span></small></div></div>`;
   };
   const control = (title: string, text: string, body: string) => `<div class="ctl"><b>${title}</b><p>${text}</p>${body}</div>`;
   const hidden = `<input type="hidden" name="groupId" value="${esc(group.id)}">`;
@@ -486,7 +557,8 @@ export async function dashboard(request: Request, env: Env, store: Store, servic
   try {
     if (request.method === "GET") {
       if (url.pathname === "/_fonts/jakarta.woff2") return fontResponse();
-      if (url.pathname === "/") return await overviewPage(store, actor, host, url.searchParams.get("branch"), url.searchParams.get("q"));
+      if (url.pathname === "/") return await overviewPage(store, env, actor, host, url.searchParams.get("branch"), url.searchParams.get("q"));
+      if (url.pathname === "/confirm/rollback") return await confirmRollback(store, actor, host, url.searchParams);
       const groupMatch = /^\/groups\/([0-9a-f-]{36})$/.exec(url.pathname);
       if (groupMatch) return await groupPage(store, actor, groupMatch[1]!, host);
       if (url.pathname === "/audit") return await auditPage(store, actor, host);
@@ -530,7 +602,8 @@ export async function dashboard(request: Request, env: Env, store: Store, servic
         const scope = (f.scope ?? "") as Scope;
         if (!SCOPES.includes(scope)) throw new Invalid("Unknown scope.");
         const created = await services.createToken(f.name ?? "", scope, actor);
-        return await tokensPage(store, actor, host, `<div class="flash"><div><h2 style="margin:0 0 6px;font-size:16px">New ${esc(scope)} token: ${esc(f.name)}</h2><p class="sub" style="margin:0 0 10px">Copy it now. Only its hash is stored, so it cannot be shown again.</p><code style="color:var(--fg)">${esc(created.token)}</code></div></div>`);
+        return await tokensPage(store, actor, host, `<div class="flash"><div><h2 style="margin:0 0 6px;font-size:16px">New ${esc(scope)} token: ${esc(f.name)}</h2><p class="sub" style="margin:0 0 10px">Copy it now. Only its hash is stored, so it cannot be shown again.</p><pre class="cmd" style="color:var(--fg)">${esc(created.token)}</pre>
+<p class="sub" style="margin:14px 0 8px">Use it on your machine, or store it as a CI secret:</p><pre class="cmd">export FLARE_OTA_TOKEN=&lt;token&gt;\n<span class="c"># GitHub Actions</span>\ngh secret set FLARE_OTA_TOKEN</pre></div></div>`);
       }
       case "/actions/token-revoke":
         await services.revokeToken(f.id ?? "", actor);

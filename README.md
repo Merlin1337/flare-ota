@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Merlin1337/flare-ota/actions/workflows/ci.yml"><img src="https://github.com/Merlin1337/flare-ota/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/flare-ota"><img src="https://img.shields.io/npm/v/flare-ota?color=f97316&label=npm" alt="npm version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-f97316" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/expo--updates-SDK%2052%2B-0c0a09" alt="expo-updates SDK 52+">
   <img src="https://img.shields.io/badge/Cloudflare-Workers%20%C2%B7%20D1%20%C2%B7%20R2-f38020" alt="Cloudflare Workers, D1, R2">

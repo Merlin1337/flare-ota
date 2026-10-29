@@ -42,3 +42,9 @@ https://github.com/dnlsilva/open-ota — product ideas: an MCP server sharing on
 across remote and stdio transports, signed preview links with QR codes, adoption metrics,
 pause/promote between channels. No code was copied; flare-ota implements these on top of the
 standard `expo-updates` client instead of a custom native SDK.
+
+## Plus Jakarta Sans
+
+The dashboard embeds Plus Jakarta Sans (`packages/server/src/fonts.ts`), Copyright 2020 The Plus
+Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans), licensed under the
+SIL Open Font License, Version 1.1 (https://openfontlicense.org).

@@ -97,7 +97,7 @@ h1{margin:0;font-weight:750;font-size:30px;line-height:1.1;letter-spacing:-.035e
 .roll .badge{color:var(--warn);border-color:rgba(255,181,71,.4);background:var(--warnBg)}.live .badge{color:var(--ok);border-color:rgba(61,220,151,.3);background:var(--okBg)}.back .badge{color:var(--bad);border-color:rgba(255,107,107,.35);background:var(--badBg)}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .plat{padding:12px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
-.plat .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--muted);font-weight:600}
+.plat{min-width:0}.plat .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600;white-space:nowrap}.plat .row span:last-child{overflow:hidden;text-overflow:ellipsis;font-weight:550}
 .plat .pv{font-size:26px;font-weight:760;letter-spacing:-.04em;color:var(--fg);margin:2px 0 10px;font-variant-numeric:tabular-nums}
 .plat.ios .pv{color:var(--ios)}.plat.android .pv{color:var(--android)}
 .track{height:6px;border-radius:99px;background:var(--raise);overflow:hidden}.track i{display:block;height:100%;border-radius:99px}
@@ -127,7 +127,7 @@ input::placeholder{color:var(--muted)}
 select{-webkit-appearance:none;appearance:none;padding-right:36px;cursor:pointer;background-repeat:no-repeat;background-position:right 13px center;background-size:12px;
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23a39b93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 input:focus,select:focus{outline:none;border-color:rgba(255,122,26,.55);box-shadow:0 0 0 3px rgba(255,122,26,.12)}
-button,.btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:650;background:var(--raise);transition:transform .15s,box-shadow .2s,border-color .2s}
+button,.btn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;font-weight:650;background:var(--raise);transition:transform .15s,box-shadow .2s,border-color .2s}
 button:hover,.btn:hover{border-color:var(--faint)}button:active{transform:translateY(1px)}
 .btn svg,button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
 .primary{background:var(--accent);border-color:transparent;color:var(--accentInk);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
@@ -187,7 +187,7 @@ pre.cmd .c{color:var(--muted)}pre.cmd .p{color:var(--accent)}
 .confirm .acts{display:flex;gap:10px}
 @media (max-width:1180px){.steps{grid-template-columns:1fr 1fr}}
 @media (max-width:1180px){.stats{grid-template-columns:1fr 1fr}.layout,.grid{grid-template-columns:1fr}}
-@media (max-width:760px){.app{grid-template-columns:1fr;padding:10px}aside{position:static;height:auto}main{padding:14px 4px}.display{font-size:40px}.platforms,.duo{grid-template-columns:1fr}.search{flex-basis:auto}}`;
+@media (max-width:760px){.app{grid-template-columns:minmax(0,1fr);padding:10px;gap:4px}main{min-width:0}nav{overflow-x:auto;max-width:100%}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:20px}.brand{padding:0;font-size:18px}.brand .mark{width:32px;height:32px}.appcard{order:3;flex-basis:100%;margin:0}nav{display:flex;margin-left:auto;gap:2px}nav a{padding:8px 10px;font-size:13.5px;gap:8px}nav a svg{display:none}nav a.on::before{display:none}.status,.me{display:none}main{padding:14px 2px 40px}.topbar{margin-bottom:20px}.livepill{display:none}.search{flex:1}.display{font-size:40px}.lead{font-size:15px}.stats{grid-template-columns:1fr;margin:22px 0}.cards{grid-template-columns:minmax(0,1fr)}.platforms,.duo{grid-template-columns:1fr 1fr}.flare{display:none}.tabs{max-width:100%}.tabs a{padding:10px 14px}table{display:block;overflow-x:auto}.steps{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.layout,.grid{grid-template-columns:minmax(0,1fr)}}`;
 
 const FLAME = `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffc56b"/></linearGradient></defs><path fill="url(#fl)" d="M12.6 2.2c.4 3-1.3 4.6-2.8 6.2C8.2 10 6.6 11.7 6.6 14.6A5.4 5.4 0 0 0 12 20a5.4 5.4 0 0 0 5.4-5.4c0-2.2-1-3.7-2.1-5 .1 1.5-.4 2.7-1.6 3.4.4-3.9-.4-7.6-1.1-10.8z"/></svg>`;
 const ICON = {

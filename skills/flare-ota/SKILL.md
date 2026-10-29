@@ -50,6 +50,8 @@ on macOS): losing it means a store build for every user.
 4. Add a URL `scheme` and the preview hook (`handlePreviewUrl` from `flare-ota/expo`) if the user
    wants preview links.
 5. These are native settings: a **new store/release build** is required before OTA works. Say so.
+   If the app has a committed `ios/`/`android/` folder, run `npx expo prebuild --clean` first or
+   the build keeps the old URL/certificate.
 6. `npx flare-ota doctor` must pass (it verifies the server's signature against the certificate).
 
 ## Everyday operations

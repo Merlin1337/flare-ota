@@ -19,7 +19,12 @@
 ```
 
 - **URL, channel, certificate and declared headers are native.** Changing them needs a new build;
-  an OTA update can never change them.
+  an OTA update can never change them. If an `ios/` or `android/` folder already exists,
+  `expo run:*` does not regenerate it: run `npx expo prebuild --clean` first, or the binary keeps
+  the old values (e.g. the old certificate, and every update fails signature validation).
+- **The certificate needs the `codeSigning` extended key usage**, or expo-updates rejects every
+  manifest ("Certificate missing code signing extended key usage"). Certificates from
+  `pnpm server:setup` or `expo-updates codesigning:generate` have it; `flare-ota doctor` checks it.
 - **Runtime version = fingerprint.** An update only reaches binaries with the same native
   fingerprint. A native change (new module, permission, native config) publishes harmlessly to a
   runtime no device runs: ship a store build for it. `flare-ota publish` resolves the fingerprint

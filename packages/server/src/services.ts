@@ -55,7 +55,12 @@ export function parsePublishInput(body: unknown): PublishInput {
 }
 
 export class Services {
-  constructor(private readonly store: Store, private readonly env: Env) {}
+  private readonly store: Store;
+  private readonly env: Env;
+  constructor(store: Store, env: Env) {
+    this.store = store;
+    this.env = env;
+  }
 
   async publish(input: PublishInput, actor: string): Promise<GroupSummary> {
     const hashes = new Set<string>();

@@ -38,8 +38,10 @@ function requireScope(c: Context<AppEnv>, scope: Scope): Principal {
 }
 
 class HttpError extends Error {
-  constructor(readonly status: 401 | 403 | 405, message: string) {
+  readonly status: 401 | 403 | 405;
+  constructor(status: 401 | 403 | 405, message: string) {
     super(message);
+    this.status = status;
   }
 }
 

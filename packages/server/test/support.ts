@@ -12,7 +12,14 @@ import type { D1Database, D1PreparedStatement, D1Result, Env, R2Bucket } from ".
 const MIGRATIONS = new URL("../migrations/", import.meta.url);
 
 class Statement implements D1PreparedStatement {
-  constructor(private readonly db: DatabaseSync, private readonly sql: string, private readonly params: unknown[] = []) {}
+  private readonly db: DatabaseSync;
+  private readonly sql: string;
+  private readonly params: unknown[];
+  constructor(db: DatabaseSync, sql: string, params: unknown[] = []) {
+    this.db = db;
+    this.sql = sql;
+    this.params = params;
+  }
   bind(...values: unknown[]) {
     return new Statement(this.db, this.sql, values);
   }

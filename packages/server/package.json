@@ -14,7 +14,8 @@
     "access": "node scripts/access.ts",
     "waf": "node scripts/waf.ts",
     "deploy-token": "node scripts/deploy-token.ts",
-    "doctor": "node scripts/doctor.ts"
+    "doctor": "node scripts/doctor.ts",
+    "demo": "node scripts/demo-dashboard.ts"
   },
   "dependencies": {
     "@flare-ota/core": "workspace:*",

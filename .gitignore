@@ -14,3 +14,6 @@ coverage/
 *.pem
 !examples/expo-app/certs/certificate.pem
 secrets.*.json
+
+# Local scratch (README asset rendering)
+.local/

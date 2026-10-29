@@ -81,7 +81,10 @@ export interface PublishOptions {
 const SELECT_UPDATE = `SELECT u.*, g.branch_name FROM updates u JOIN update_groups g ON g.id = u.group_id`;
 
 export class Store {
-  constructor(private readonly db: D1Database) {}
+  private readonly db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   // ---- channels and branches ----
 

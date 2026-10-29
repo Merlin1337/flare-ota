@@ -2,8 +2,10 @@
 // (FLARE_OTA_URL, FLARE_OTA_TOKEN); --server/--token override them for one command.
 
 export class ApiError extends Error {
-  constructor(readonly status: number, message: string) {
+  readonly status: number;
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
   }
 }
 
@@ -22,7 +24,10 @@ export function resolveClientOptions(flags: { server?: string; token?: string })
 }
 
 export class Client {
-  constructor(readonly options: ClientOptions) {}
+  readonly options: ClientOptions;
+  constructor(options: ClientOptions) {
+    this.options = options;
+  }
 
   async request<T>(method: string, path: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<T> {
     if (!this.options.token) throw new Error("Set FLARE_OTA_TOKEN (a token from the dashboard's Tokens page).");

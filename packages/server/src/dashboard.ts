@@ -51,7 +51,7 @@ nav a.on svg{stroke:var(--accent)}
 .me{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--panel)}
 .avatar{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:14px;color:var(--accentInk);background:linear-gradient(135deg,var(--accent2),var(--accent))}
 .me small{display:block;color:var(--muted);font-size:12px}.me div span{display:block;font-size:13.5px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
-main{position:relative;overflow:hidden;padding:10px 26px 60px;max-width:1380px;width:100%}
+main{position:relative;overflow:clip;padding:10px 26px 60px;max-width:1380px;width:100%}
 .topbar{display:flex;align-items:center;gap:14px;margin-bottom:34px}
 .search{position:relative;flex:0 1 420px}.search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2}
 .search input{width:100%;height:46px;padding:0 18px 0 44px;border-radius:15px;font-size:14.5px}
@@ -149,7 +149,20 @@ td{padding:15px 22px;border-top:1px solid var(--line);color:var(--fg2);vertical-
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
 .stack{display:grid;gap:18px;align-content:start}
 .flare{position:absolute;right:-40px;top:-120px;width:700px;height:460px;pointer-events:none}
-.help{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:750;color:var(--muted);border:1px solid var(--line2);cursor:help;margin-left:4px;vertical-align:1px}
+dialog.modal{width:min(560px,calc(100vw - 32px));padding:0;border:1px solid var(--line2);border-radius:24px;background:var(--solid);color:var(--fg);box-shadow:0 40px 120px -20px rgba(0,0,0,.8)}
+dialog.modal::backdrop{background:rgba(5,5,6,.6);backdrop-filter:blur(6px)}
+dialog.modal[open]{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}}
+.modal .in{padding:26px}.modal h2{margin:0 0 6px;font-size:21px;font-weight:750;letter-spacing:-.03em}
+.choice{display:block;position:relative;margin-top:12px;padding:16px 16px 16px 46px;border-radius:16px;border:1px solid var(--line2);background:var(--panel);cursor:pointer}
+.choice input{position:absolute;left:16px;top:18px;width:16px;height:16px;margin:0;accent-color:var(--accent)}
+.choice:has(input:checked){border-color:rgba(255,122,26,.55);background:linear-gradient(180deg,rgba(255,122,26,.08),transparent)}
+.choice b{display:block;font-size:14.5px}.choice small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.choice ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}.choice li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg2)}
+.modal .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.codebox{position:relative}.codebox pre.cmd{padding-right:44px}
+.copy{position:absolute;top:7px;right:7px;width:30px;height:30px;padding:0;justify-content:center;border-radius:9px;background:var(--panel2);color:var(--muted)}
+.copy:hover{color:var(--fg)}.copy svg{width:15px;height:15px;stroke-width:1.8}.copy .i-done{display:none}.copy.done{color:var(--ok);border-color:rgba(61,220,151,.45)}.copy.done .i-copy{display:none}.copy.done .i-done{display:block}
+.help{display:inline-flex;width:15px;height:15px;margin-left:5px;vertical-align:-2px;color:var(--muted);cursor:help}.help:hover{color:var(--fg2)}.help svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
 .onboard{padding:24px 26px;margin:30px 0 8px;border-color:rgba(255,122,26,.35);background:radial-gradient(120% 140% at 0% 0%,rgba(255,122,26,.12),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
 .onboard header{display:flex;align-items:center;gap:16px;margin-bottom:18px}.onboard h2{margin:0;font-size:20px;font-weight:750;letter-spacing:-.025em}.onboard header p{margin:3px 0 0;color:var(--muted);font-size:14px}
 .progress{margin-left:auto;min-width:170px;text-align:right;font-size:13px;color:var(--muted);font-weight:600}.progress .track{margin-top:8px;height:7px}.progress .track i{background:var(--accent)}
@@ -187,17 +200,31 @@ const FLARE_ART = `<svg class="flare" viewBox="0 0 640 420" aria-hidden="true"><
 <g fill="none" stroke="url(#fg)">${[60, 110, 165, 225, 290, 360].map((r, i) => `<circle cx="450" cy="90" r="${r}" stroke-width="${1.6 - i * 0.18}" stroke-dasharray="${i % 2 ? "2 6" : "none"}"/>`).join("")}</g>
 <circle cx="450" cy="90" r="5" fill="#ffb547"/><circle cx="450" cy="90" r="18" fill="#ff7a1a" opacity=".25"/></svg>`;
 
+
+// The dashboard's only script, served from the Worker itself (CSP script-src 'self'): copy buttons.
+const UI_JS = `{const c=document.body&&document.body.dataset.canonical;if(c)history.replaceState(null,"",c)}document.addEventListener("click",async(e)=>{const o=e.target.closest("[data-dialog]");if(o){const d=document.getElementById(o.dataset.dialog);if(d&&d.showModal){e.preventDefault();d.showModal();return}}if(e.target.tagName==="DIALOG"){e.target.close();return}const b=e.target.closest("[data-copy]");if(!b)return;try{await navigator.clipboard.writeText(b.dataset.copy);b.classList.add("done");b.setAttribute("aria-label","Copied");setTimeout(()=>{b.classList.remove("done");b.setAttribute("aria-label","Copy")},1600)}catch{}});`;
+
+/** Changes whenever UI_JS changes, so browsers never run a stale cached copy. */
+const UI_VERSION = [...UI_JS].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7).toString(36);
+
+const COPY_ICONS = `<svg class="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg><svg class="i-done" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+/** A code block with a copy button. `text` is what lands in the clipboard; `html` is what is shown. */
+function codeBox(text: string, html = esc(text), extraClass = ""): string {
+  return `<div class="codebox"><pre class="cmd ${extraClass}">${html}</pre><button type="button" class="copy" data-copy="${esc(text)}" aria-label="Copy" title="Copy">${COPY_ICONS}</button></div>`;
+}
+
 let fontBytes: Uint8Array<ArrayBuffer> | null = null;
 function fontResponse(): Response {
   fontBytes ??= Uint8Array.from(atob(JAKARTA_WOFF2), (c) => c.charCodeAt(0));
   return new Response(fontBytes, { headers: { "content-type": "font/woff2", "cache-control": "public, max-age=31536000, immutable" } });
 }
 
-function page(title: string, actor: string, body: string, active = "", host = ""): Response {
+function page(title: string, actor: string, body: string, active = "", host = "", canonical = ""): Response {
   const who = actor.replace(/^access:/, "");
   const link = (href: string, label: string, icon: string) => `<a href="${href}" class="${active === href ? "on" : ""}">${icon}${label}</a>`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)} · flare-ota</title><link rel="preload" href="/_fonts/jakarta.woff2" as="font" type="font/woff2" crossorigin><style>${STYLE}</style></head><body><div class="app">
+<title>${esc(title)} · flare-ota</title><link rel="preload" href="/_fonts/jakarta.woff2" as="font" type="font/woff2" crossorigin><style>${STYLE}</style><script src="/_assets/ui.js?v=${UI_VERSION}" defer></script></head><body${canonical ? ` data-canonical="${esc(canonical)}"` : ""}><div class="app">
 <aside><a class="brand" href="/"><span class="mark">${FLAME}</span>flare-ota</a>
 <nav>${link("/", "Releases", ICON.overview)}${link("/tokens", "Tokens", ICON.tokens)}${link("/audit", "Audit log", ICON.audit)}</nav>
 <div class="status"><b><span class="dot live"></span>All systems normal</b><small>${esc(host || "updates server")}</small></div>
@@ -207,7 +234,7 @@ function page(title: string, actor: string, body: string, active = "", host = ""
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
-      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+      "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
       "x-content-type-options": "nosniff",
       // same-origin, not no-referrer: with no-referrer, browsers send `Origin: null` on form posts,
       // which the CSRF check below would (rightly) refuse.
@@ -323,15 +350,16 @@ ${failed && cls !== "paused" && cls !== "back" ? `<div class="alert"><span>${num
 }
 
 
-const help = (text: string) => `<span class="help" title="${esc(text)}">?</span>`;
+const help = (text: string) =>
+  `<span class="help" title="${esc(text)}"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M6.1 6.2a1.95 1.95 0 1 1 2.75 1.78c-.52.24-.85.7-.85 1.25v.37"/><circle cx="8" cy="11.55" r=".55" fill="currentColor" stroke="none"/></svg></span>`;
 
 function onboarding(state: { token: boolean; device: boolean; published: boolean }, updatesHost: string): string {
   const url = `https://${updatesHost || "<your-updates-host>"}`;
   const steps = [
-    { done: state.token, title: "Create a publish token", text: "For your laptop and CI. flare-ota only stores its hash.", body: `<a class="btn" href="/tokens">${ICON.tokens}Create token</a>` },
-    { done: state.device, title: "Connect your Expo app", text: "Copy <code>certificate.pem</code> printed by setup into <code>certs/</code>, then:", body: `<pre class="cmd">npx expo install expo-updates\nnpm i -D flare-ota\nFLARE_OTA_URL=${esc(url)} \\\n  npx flare-ota init</pre>` },
-    { done: state.device, title: "Build a release binary", text: "The update URL and certificate live in the binary. Ticks itself when a device checks in.", body: `<pre class="cmd"><span class="c"># or EAS Build, Xcode, CI…</span>\nnpx expo run:ios --configuration Release</pre>` },
-    { done: state.published, title: "Publish your first update", text: "Change some JavaScript, then ship it. Devices get it on their next launches.", body: `<pre class="cmd">export FLARE_OTA_TOKEN=fota_…\nnpx flare-ota publish \\\n  --branch production -m "First OTA"</pre>` },
+    { done: state.token, title: "Create a publish token", text: "For your laptop and CI. flare-ota only stores its hash.", body: `<a class="btn" href="/tokens?new=1">${ICON.tokens}Create token</a>` },
+    { done: state.device, title: "Connect your Expo app", text: "Copy <code>certificate.pem</code> printed by setup into <code>certs/</code>, then:", body: codeBox(`npx expo install expo-updates\nnpm i -D flare-ota\nFLARE_OTA_URL=${url} npx flare-ota init`) },
+    { done: state.device, title: "Build a release binary", text: "The update URL and certificate live in the binary. Ticks itself when a device checks in.", body: codeBox("npx expo run:ios --configuration Release", `<span class="c"># or EAS Build, Xcode, CI…</span>\nnpx expo run:ios --configuration Release`) },
+    { done: state.published, title: "Publish your first update", text: "Change some JavaScript, then ship it. Devices get it on their next launches.", body: codeBox(`npx flare-ota publish --branch production -m "First OTA"`, `<span class="c"># with FLARE_OTA_TOKEN set</span>\nnpx flare-ota publish \\\n  --branch production -m "First OTA"`) },
   ];
   const done = steps.filter((x) => x.done).length;
   const next = steps.findIndex((x) => !x.done);
@@ -342,8 +370,8 @@ function onboarding(state: { token: boolean; device: boolean; published: boolean
 
 function publishPanel(branch: string, updatesHost: string): string {
   return `<div class="card"><div class="ch"><h2>Publish an update</h2>${help("Updates are built from your app's code on your machine or CI, then uploaded here. The dashboard never touches your source.")}</div>
-<div style="padding:0 22px 20px"><pre class="cmd"><span class="c"># in your app's folder</span>\nexport FLARE_OTA_TOKEN=fota_…\nnpx flare-ota publish \\\n  --branch ${esc(branch)} \\\n  -m "What changed"</pre>
-<p class="sub" style="font-size:12.5px;margin-top:10px">Server: <span class="mono">https://${esc(updatesHost || "<updates-host>")}</span> (<span class="mono">FLARE_OTA_URL</span>). Add <span class="mono">--rollout 10</span> to start with 10% of devices.</p></div></div>`;
+<div style="padding:0 22px 20px">${codeBox(`npx flare-ota publish --branch ${branch} -m "What changed"`, `<span class="c"># in your app's folder</span>\nnpx flare-ota publish \\\n  --branch ${esc(branch)} \\\n  -m "What changed"`)}
+<p class="sub" style="font-size:12.5px;margin-top:10px">Needs <span class="mono">FLARE_OTA_TOKEN</span> and <span class="mono">FLARE_OTA_URL=https://${esc(updatesHost || "<updates-host>")}</span>. Add <span class="mono">--rollout 10</span> to start with 10% of devices.</p></div></div>`;
 }
 
 // ---- activity feed ----
@@ -422,7 +450,7 @@ ${setupDone ? "" : onboarding({ token: hasPublishToken, device: overview.devices
 <div class="card stat"><div class="l">Rollouts in progress${help("Releases offered to only part of your users. Raise them when the numbers look healthy.")}</div><div class="v" style="color:${rolling.length ? "var(--warn)" : "var(--fg)"}">${rolling.length}</div><div class="h">${rolling.length ? `${esc(rolling[0]!.message)} · <b>${Math.max(...rolling[0]!.updates.map((u) => u.rolloutPercent))}%</b>` : "Everything fully rolled out"}</div></div>
 <div class="card stat"><div class="l">Failed launches · 7 d${help("Launches expo-updates reported as failed. Such a device falls back and is never offered that release again.")}</div><div class="v ${activity.failed7d ? "bad" : ""}">${num(activity.failed7d)}</div><div class="h">${activity.failed7d ? "Never re-offered to those devices" : "No launch failures reported"}</div></div></div>
 <div class="layout"><div><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div class="tabs">${tabs}</div><span class="grow"></span>
-<form method="get" action="/confirm/rollback" style="margin-bottom:18px" title="You will see exactly what changes before anything happens."><input type="hidden" name="branch" value="${esc(branch)}"><select name="to"><option value="previous">To the previous release</option><option value="embedded">To the app's built-in code</option></select><button class="danger">Roll back…</button></form></div>
+${current.groups.length ? `<a class="btn danger" style="margin-bottom:18px" href="/confirm/rollback?branch=${encodeURIComponent(branch)}&to=previous" data-dialog="rollback-dialog">Roll back ${esc(branch)}…</a>` : ""}</div>
 <div class="cards">${shown.map((g) => releaseCard(g, current.metrics)).join("") || `<div class="card empty" style="grid-column:1/-1">${q ? `No release on ${esc(branch)} matches “${esc(q)}”.` : `Nothing published on ${esc(branch)} yet. Run <code>npx flare-ota publish --branch ${esc(branch)}</code>.`}</div>`}</div></div>
 <div class="stack">
 ${published ? publishPanel(branch, env.UPDATES_HOST ?? "") : ""}
@@ -432,8 +460,28 @@ ${published ? publishPanel(branch, env.UPDATES_HOST ?? "") : ""}
 <div class="card"><div class="ch"><h2>Activity</h2><span class="grow"></span><a class="tag" href="/audit">View all</a></div>${feed(audit, allGroups)}</div>
 <div class="card"><div class="ch"><h2>Channels</h2>${help("Your app asks for a channel (set at build time). Each channel serves one branch. Most apps never change this.")}</div><div class="list">${overview.channels.map((c) => `<div class="li"><span class="grow" style="font-weight:600">${esc(c.name)}</span><span style="color:var(--muted)">→</span><span class="tag">${esc(c.branch)}</span></div>`).join("")}</div>
 <div class="toolbar"><form method="post" action="/actions/channel"><input name="channel" placeholder="channel" required style="width:100px"><input name="branch" placeholder="branch" required style="width:100px"><button>Point</button></form></div></div>
-</div></div>`;
+</div></div>${await rollbackDialog(store, branch)}`;
   return page("Releases", actor, body, "/", host);
+}
+
+/** Rollback dialog for one branch: both options, with what each platform would go back to. */
+async function rollbackDialog(store: Store, branch: string): Promise<string> {
+  const targets = await store.rollbackTargets(branch, null);
+  if (!targets.length) return "";
+  const label = (p: string) => (p === "ios" ? "iOS" : "Android");
+  const previous = await Promise.all(
+    targets.map(async (t) => {
+      if (!t.target) return `<li><span class="chip paused">${label(t.platform)}</span>no earlier release</li>`;
+      const source = await store.group(t.target.groupId);
+      return `<li><span class="chip live">${label(t.platform)}</span>${esc(source?.message || t.target.groupId.slice(0, 8))} <span style="color:var(--muted)">· ${esc(since(t.target.createdAt))}</span></li>`;
+    }),
+  );
+  const canPrevious = targets.every((t) => t.target);
+  return `<dialog id="rollback-dialog" class="modal"><form method="post" action="/actions/rollback" class="in" style="display:block"><input type="hidden" name="branch" value="${esc(branch)}">
+<h2>Roll back ${esc(branch)}</h2><p class="sub" style="margin:0">Every device on this branch switches on its next launches. Nothing is deleted; you can publish again any time.</p>
+<label class="choice"><input type="radio" name="to" value="previous" ${canPrevious ? "checked" : "disabled"}><b>To the previous release</b><small>Re-sends the last good bundle as a new update.</small><ul>${previous.join("")}</ul></label>
+<label class="choice"><input type="radio" name="to" value="embedded" ${canPrevious ? "" : "checked"}><b>To the app's built-in code</b><small>Devices drop every OTA update and run what shipped in their binary.</small></label>
+<div class="acts"><button type="submit" formmethod="dialog" formnovalidate>Cancel</button><button class="primary" style="background:var(--bad)">Roll back now</button></div></form></dialog>`;
 }
 
 async function confirmRollback(store: Store, actor: string, host: string, params: URLSearchParams): Promise<Response> {
@@ -496,7 +544,7 @@ async function groupPage(store: Store, actor: string, id: string, host: string, 
 ${group.sourceGroupId ? `<dt>Copied from</dt><dd><a class="mono" href="/groups/${esc(group.sourceGroupId)}">${esc(group.sourceGroupId)}</a></dd>` : ""}
 <dt>Runtimes</dt><dd>${group.updates.map((u) => `${u.platform === "ios" ? "iOS" : "Android"} <span class="mono">${esc(u.runtimeVersion.slice(0, 12))}</span>`).join(" · ")}</dd></dl></div></div>
 <div class="card"><div class="ch"><h2>Controls</h2></div>${controls}</div></div>`;
-  return page(group.message || "Release", actor, body, "/", host);
+  return page(group.message || "Release", actor, body, "/", host, flash ? `/groups/${group.id}` : "");
 }
 
 async function auditPage(store: Store, actor: string, host: string): Promise<Response> {
@@ -520,14 +568,30 @@ async function auditPage(store: Store, actor: string, host: string): Promise<Res
 <div class="card"><table><tr><th>When (UTC)</th><th>Who</th><th>Action</th><th>Target</th><th>Details</th></tr>${rows || '<tr><td colspan="5" class="empty">Nothing yet.</td></tr>'}</table></div>`, "/audit", host);
 }
 
-async function tokensPage(store: Store, actor: string, host: string, flash = ""): Promise<Response> {
+const SCOPE_INFO: Record<Scope, [string, string]> = {
+  read: ["Read", "See releases, metrics and the audit log. For dashboards and AI agents that only look."],
+  publish: ["Publish", "Upload bundles and publish releases. What CI and your laptop need. Cannot roll back or create tokens."],
+  admin: ["Admin", "Everything: rollouts, rollbacks, channels, preview links and tokens. Keep these few."],
+};
+
+function tokenForm(): string {
+  return `<form method="post" action="/actions/token-create" class="in" style="display:block"><h2>New token</h2><p class="sub" style="margin:0 0 18px">Shown once, then only its hash is kept.</p>
+<label style="display:block;font-size:13px;font-weight:650;margin-bottom:6px">Name</label><input name="name" placeholder="e.g. github-actions, my-laptop" required pattern="[\\w .@:-]{1,64}" style="width:100%">
+<div style="font-size:13px;font-weight:650;margin:18px 0 0">Permission</div>
+${SCOPES.map((scope) => `<label class="choice"><input type="radio" name="scope" value="${scope}" ${scope === "publish" ? "checked" : ""}><b>${SCOPE_INFO[scope][0]}${scope === "publish" ? ' <span class="chip roll" style="margin-left:6px">Recommended</span>' : ""}</b><small>${SCOPE_INFO[scope][1]}</small></label>`).join("")}
+<div class="acts"><button type="submit" formmethod="dialog" formnovalidate>Cancel</button><button class="primary">Create token</button></div></form>`;
+}
+
+async function tokensPage(store: Store, actor: string, host: string, flash = "", showForm = false): Promise<Response> {
   const rows = (await store.listTokens())
-    .map((t) => `<tr><td><b style="color:var(--fg);font-weight:600">${esc(t.name)}</b></td><td><span class="chip ${t.scope === "admin" ? "back" : t.scope === "publish" ? "roll" : "live"}">${esc(t.scope)}</span></td><td>${esc(t.createdAt.slice(0, 10))}</td><td>${esc(t.lastUsedAt ? since(t.lastUsedAt) : "never")}</td>
-<td style="text-align:right">${t.revokedAt ? '<span class="muted">revoked</span>' : `<form method="post" action="/actions/token-revoke"><input type="hidden" name="id" value="${esc(t.id)}"><button class="danger ghost">Revoke</button></form>`}</td></tr>`)
+    .map((t) => `<tr><td><b style="color:var(--fg);font-weight:650">${esc(t.name)}</b></td><td><span class="chip ${t.scope === "admin" ? "back" : t.scope === "publish" ? "roll" : "live"}">${esc(t.scope)}</span></td><td>${esc(t.createdAt.slice(0, 10))}</td><td>${esc(t.lastUsedAt ? since(t.lastUsedAt) : "never")}</td>
+<td style="text-align:right">${t.revokedAt ? '<span style="color:var(--muted)">revoked</span>' : `<form method="post" action="/actions/token-revoke"><input type="hidden" name="id" value="${esc(t.id)}"><button class="danger ghost">Revoke</button></form>`}</td></tr>`)
     .join("");
-  return page("Tokens", actor, `${flash}<div class="top"><div><div class="crumb">Workspace · Tokens</div><h1>Tokens</h1><p class="sub"><b>read</b> sees metrics · <b>publish</b> uploads and publishes (CI) · <b>admin</b> changes rollouts, rollbacks, channels, previews and tokens.</p></div></div>
-<div class="card"><table><tr><th>Name</th><th>Scope</th><th>Created</th><th>Last used</th><th></th></tr>${rows || '<tr><td colspan="5" class="empty">No tokens yet.</td></tr>'}</table>
-<div class="toolbar"><form method="post" action="/actions/token-create"><input name="name" placeholder="Name, e.g. github-actions" required pattern="[\\w .@:-]{1,64}" style="width:240px"><select name="scope">${SCOPES.map((s) => `<option${s === "publish" ? " selected" : ""}>${s}</option>`).join("")}</select><button class="primary">Create token</button></form></div></div>`, "/tokens", host);
+  return page("Tokens", actor, `${flash}<div class="top"><div><div class="crumb">Workspace · Tokens</div><h1 class="display sm">Tokens</h1><p class="sub">Keys for the CLI, CI and AI agents. Each one has a single permission level.</p></div>
+<a class="btn primary" href="/tokens?new=1" data-dialog="token-dialog">+ New token</a></div>
+${showForm ? `<section class="card modal" style="max-width:560px;margin-bottom:22px">${tokenForm()}</section>` : ""}
+<div class="card"><table><tr><th>Name</th><th>Permission</th><th>Created</th><th>Last used</th><th></th></tr>${rows || '<tr><td colspan="5" class="empty">No tokens yet. Create one for your laptop or CI.</td></tr>'}</table></div>
+<dialog id="token-dialog" class="modal">${tokenForm()}</dialog>`, "/tokens", host, flash ? "/tokens" : "");
 }
 
 function qrSvg(text: string): string {
@@ -557,12 +621,13 @@ export async function dashboard(request: Request, env: Env, store: Store, servic
   try {
     if (request.method === "GET") {
       if (url.pathname === "/_fonts/jakarta.woff2") return fontResponse();
+      if (url.pathname === "/_assets/ui.js") return new Response(UI_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "public, max-age=31536000, immutable" } });
       if (url.pathname === "/") return await overviewPage(store, env, actor, host, url.searchParams.get("branch"), url.searchParams.get("q"));
       if (url.pathname === "/confirm/rollback") return await confirmRollback(store, actor, host, url.searchParams);
       const groupMatch = /^\/groups\/([0-9a-f-]{36})$/.exec(url.pathname);
       if (groupMatch) return await groupPage(store, actor, groupMatch[1]!, host);
       if (url.pathname === "/audit") return await auditPage(store, actor, host);
-      if (url.pathname === "/tokens") return await tokensPage(store, actor, host);
+      if (url.pathname === "/tokens") return await tokensPage(store, actor, host, "", url.searchParams.get("new") === "1");
       return page("Not found", actor, `<h1>Not found</h1>`, "", host);
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
@@ -594,16 +659,16 @@ export async function dashboard(request: Request, env: Env, store: Store, servic
         return redirect("/");
       case "/actions/preview": {
         const preview = await services.createPreview(f.groupId ?? "", Number(f.ttlMinutes ?? 60), null, actor);
-        const flash = `<div class="flash"><div class="qr">${qrSvg(preview.deepLink)}</div><div><h2 style="margin:0 0 6px;font-size:16px">Preview link ready</h2>
-<p class="sub" style="margin:0 0 10px">Scan with a device whose build declares the <code>flare-preview</code> header. Expires in ${Math.round((Date.parse(preview.expiresAt) - Date.now()) / 60_000)} min (${esc(preview.expiresAt.slice(0, 16).replace("T", " "))} UTC).</p><code>${esc(preview.deepLink)}</code></div></div>`;
+        const flash = `<div class="flash"><div class="qr">${qrSvg(preview.deepLink)}</div><div style="min-width:0;flex:1"><h2 style="margin:0 0 6px;font-size:16px">Preview link ready</h2>
+<p class="sub" style="margin:0 0 10px">Scan with a device whose build declares the <code>flare-preview</code> header. Expires in ${Math.round((Date.parse(preview.expiresAt) - Date.now()) / 60_000)} min (${esc(preview.expiresAt.slice(0, 16).replace("T", " "))} UTC).</p>${codeBox(preview.deepLink)}</div></div>`;
         return await groupPage(store, actor, f.groupId ?? "", host, flash);
       }
       case "/actions/token-create": {
         const scope = (f.scope ?? "") as Scope;
         if (!SCOPES.includes(scope)) throw new Invalid("Unknown scope.");
         const created = await services.createToken(f.name ?? "", scope, actor);
-        return await tokensPage(store, actor, host, `<div class="flash"><div><h2 style="margin:0 0 6px;font-size:16px">New ${esc(scope)} token: ${esc(f.name)}</h2><p class="sub" style="margin:0 0 10px">Copy it now. Only its hash is stored, so it cannot be shown again.</p><pre class="cmd" style="color:var(--fg)">${esc(created.token)}</pre>
-<p class="sub" style="margin:14px 0 8px">Use it on your machine, or store it as a CI secret:</p><pre class="cmd">export FLARE_OTA_TOKEN=&lt;token&gt;\n<span class="c"># GitHub Actions</span>\ngh secret set FLARE_OTA_TOKEN</pre></div></div>`);
+        return await tokensPage(store, actor, host, `<div class="flash"><div><h2 style="margin:0 0 6px;font-size:16px">New ${esc(scope)} token: ${esc(f.name)}</h2><p class="sub" style="margin:0 0 10px">Copy it now. Only its hash is stored, so it cannot be shown again.</p>${codeBox(created.token)}
+<p class="sub" style="margin:14px 0 8px">Use it on your machine, or store it as a CI secret:</p>${codeBox(`export FLARE_OTA_TOKEN=${created.token}`, "export FLARE_OTA_TOKEN=&lt;token&gt;")}<div style="height:8px"></div>${codeBox("gh secret set FLARE_OTA_TOKEN", `<span class="c"># GitHub Actions: paste the token when asked</span>\ngh secret set FLARE_OTA_TOKEN`)}</div></div>`);
       }
       case "/actions/token-revoke":
         await services.revokeToken(f.id ?? "", actor);

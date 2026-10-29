@@ -109,7 +109,15 @@ if (!signingKey) {
 process.env.FLARE_OTA_SIGNING_KEY = signingKey;
 if (!existsSync(certPath)) {
   // The key reaches openssl on stdin only; the certificate is public.
-  execFileSync("openssl", ["req", "-x509", "-new", "-key", "/dev/stdin", "-sha256", "-days", "3650", "-subj", `/CN=${scheme} updates`, "-out", certPath], { input: signingKey });
+  // expo-updates rejects certificates without the codeSigning extended key usage.
+  execFileSync(
+    "openssl",
+    [
+      "req", "-x509", "-new", "-key", "/dev/stdin", "-sha256", "-days", "3650", "-subj", `/CN=${scheme} updates`,
+      "-addext", "keyUsage=critical,digitalSignature", "-addext", "extendedKeyUsage=critical,codeSigning", "-out", certPath,
+    ],
+    { input: signingKey },
+  );
 }
 console.log(`Certificate for your app: ${certPath}\n  copy it to <app>/certs/certificate.pem and commit it (it is public).`);
 let preview = env("FLARE_OTA_PREVIEW_SECRET") ?? keychainRead(previewService);

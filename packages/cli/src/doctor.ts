@@ -60,6 +60,9 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
       try {
         certificate = new X509Certificate(readFileSync(certPath));
         add("code signing", meta.keyid === "main" && meta.alg === "rsa-v1_5-sha256", `${updates.codeSigningCertificate}, valid to ${certificate.validTo}; metadata ${JSON.stringify(meta)}`);
+        // expo-updates refuses a certificate without the codeSigning extended key usage (1.3.6.1.5.5.7.3.3).
+        const usages = certificate.keyUsage ?? [];
+        add("certificate usage", usages.includes("1.3.6.1.5.5.7.3.3"), usages.includes("1.3.6.1.5.5.7.3.3") ? "codeSigning extended key usage present" : "missing the codeSigning extended key usage: devices will reject every update. Regenerate the certificate (setup or expo-updates codesigning:generate).");
       } catch (error) {
         add("code signing", false, `cannot read ${updates.codeSigningCertificate}: ${(error as Error).message}`);
       }

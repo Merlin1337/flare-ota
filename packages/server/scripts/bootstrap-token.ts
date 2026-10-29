@@ -11,5 +11,9 @@ const id = await databaseId(`${workerName(stage)}-db`);
 if (!id) throw new Error("Database not found: deploy first.");
 const token = `fota_${randomBytes(32).toString("base64url")}`;
 const hash = createHash("sha256").update(token).digest("hex");
-await cfJson(["d1", "query", id, "--sql", "INSERT INTO tokens (id, name, hash, scope, created_at) VALUES (?, ?, ?, 'admin', ?)", "--params", JSON.stringify([crypto.randomUUID(), name, hash, new Date().toISOString()])]);
+// Only the digest leaves this process (cf's --params flag is a plain string in this beta, so use --body).
+await cfJson(["d1", "query", id, "--body", JSON.stringify({
+  sql: "INSERT INTO tokens (id, name, hash, scope, created_at) VALUES (?, ?, ?, 'admin', ?)",
+  params: [crypto.randomUUID(), name, hash, new Date().toISOString()],
+})]);
 console.log(`Admin token for ${stage} (store it now in your password manager; it is not shown again):\n\n${token}\n`);

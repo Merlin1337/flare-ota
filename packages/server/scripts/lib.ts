@@ -80,6 +80,23 @@ export async function ensureDatabase(name: string): Promise<string> {
   return created.uuid;
 }
 
+/** R2 must be enabled once per account (dashboard → R2); cf cannot do that step. */
+export async function ensureBucket(name: string): Promise<void> {
+  let buckets: { name: string }[];
+  try {
+    const listed = await cfJson<{ buckets?: { name: string }[] } | { name: string }[]>(["r2", "buckets", "list"]);
+    buckets = Array.isArray(listed) ? listed : (listed.buckets ?? []);
+  } catch (error) {
+    if (/enable R2/i.test((error as Error).message)) {
+      throw new Error("R2 is not enabled on this account. Open the Cloudflare dashboard → R2 Object Storage → enable it (the free tier covers 10 GB), then rerun.");
+    }
+    throw error;
+  }
+  if (buckets.some((b) => b.name === name)) return;
+  await cf(["r2", "buckets", "create", "--name", name]);
+  console.log(`Created R2 bucket ${name}`);
+}
+
 export async function zoneFor(hostname: string): Promise<{ id: string; name: string }> {
   const parts = hostname.split(".");
   for (let i = 0; i < parts.length - 1; i++) {

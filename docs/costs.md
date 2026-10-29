@@ -9,7 +9,7 @@ Prices from Cloudflare's pricing pages (checked October 2026). Verify them for y
   6 hours per device. An upsert writes the row and its index entries.
 - **Asset downloads** only when an update is new to the device, and only for files it lacks.
   Each is a Worker request served from the edge cache or R2 (egress is free).
-- **One Analytics Engine data point per check and per asset** (optional, `FLARE_OTA_ANALYTICS=off`).
+- **One Analytics Engine data point per check and per asset**, only if you opt in with `FLARE_OTA_ANALYTICS=on`.
 
 ## Workers Free
 

@@ -3,7 +3,7 @@
 // Secrets come from the environment (keychain, password manager or CI secrets), never from the repo:
 //   FLARE_OTA_SIGNING_KEY      PEM private key matching the certificate in your app
 //   FLARE_OTA_PREVIEW_SECRET   random string for preview links (optional; previews off without it)
-import { cfLive, ensureDatabase, env, requireEnv, stageArgs, step, withSecretsFile, workerName } from "./lib.ts";
+import { cfLive, ensureBucket, ensureDatabase, env, requireEnv, stageArgs, step, withSecretsFile, workerName } from "./lib.ts";
 
 const { stage } = stageArgs();
 requireEnv("CLOUDFLARE_ACCOUNT_ID");
@@ -18,6 +18,9 @@ const name = workerName(stage);
 step(`D1 database ${name}-db`);
 const id = await ensureDatabase(`${name}-db`);
 await cfLive(["d1", "migrations", "apply", id, "--dir", "migrations"]);
+
+step(`R2 bucket ${name}-assets`);
+await ensureBucket(`${name}-assets`);
 
 step(`Deploying ${name}`);
 const secrets: Record<string, string> = { SIGNING_KEY: signingKey };

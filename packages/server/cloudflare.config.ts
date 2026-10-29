@@ -26,7 +26,8 @@ export default defineConfig(({ mode }) => {
       env: {
         DB: bindings.d1({ name: `${name}-db` }),
         BUCKET: bindings.r2({ name: `${name}-assets` }),
-        ...(env("FLARE_OTA_ANALYTICS") === "off" ? {} : { EVENTS: bindings.analyticsEngineDataset({ name: `${name.replaceAll("-", "_")}_events` }) }),
+        // Opt-in: Analytics Engine must first be enabled once per account in the dashboard.
+        ...(env("FLARE_OTA_ANALYTICS") === "on" ? { EVENTS: bindings.analyticsEngineDataset({ name: `${name.replaceAll("-", "_")}_events` }) } : {}),
         SIGNING_KEY: bindings.secret(),
         PREVIEW_SECRET: bindings.secret(),
         ...vars,

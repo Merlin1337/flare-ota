@@ -20,8 +20,8 @@ Cloudflare account in a few commands.
    ┌──────────────── Cloudflare ────────────────────────────────────────────────┐
    │  WAF + rate limit ─▶ Worker (flare-ota) ◀─ Access ─ dashboard host          │
    │                       │        │        │                                   │
-   │                      D1       R2   Analytics Engine     cron: GC            │
-   │              (updates, devices,  (bundles,  (raw delivery events)            │
+   │                      D1       R2   Analytics Engine*    cron: GC            │
+   │              (updates, devices,  (bundles,  (optional raw events)            │
    │               tokens, audit)     assets)                                     │
    └──────────────────────────────────────────────────────────────────────────────┘
 ```

@@ -5,7 +5,10 @@ From zero to an update on a device. Budget 20 minutes, plus one native build.
 ## 0. Prerequisites
 
 - A Cloudflare account with a domain (zone) on it. Workers Free is enough to start; see [costs](costs.md).
-- Zero Trust enabled on the account (free up to 50 users): https://one.dash.cloudflare.com → pick a team name.
+- Two one-time switches in the Cloudflare dashboard, for that account (cf cannot flip them):
+  - **Zero Trust**: https://one.dash.cloudflare.com → pick a team name, Free plan (up to 50 users).
+  - **R2**: dashboard → R2 Object Storage → enable (free tier: 10 GB). Cloudflare may ask for a
+    payment method even for free usage.
 - Node 24.22+ and pnpm 10 (`corepack enable`), `openssl` (preinstalled on macOS and Linux).
 - An Expo app on SDK 52 or newer.
 

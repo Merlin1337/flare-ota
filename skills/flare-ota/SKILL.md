@@ -25,8 +25,8 @@ Read its `docs/` for details; this skill is the operating procedure.
 
 ## Deploy the server (once per stage)
 
-Prerequisites: a Cloudflare account with a zone, Zero Trust enabled (free), Node 24.22+, pnpm,
-openssl. If one is missing, say exactly what the user must do (e.g. "open one.dash.cloudflare.com
+Prerequisites: a Cloudflare account with a zone, Zero Trust and R2 enabled once in the dashboard
+(both have free tiers; the user must click them), Node 24.22+, pnpm, openssl. If one is missing, say exactly what the user must do (e.g. "open one.dash.cloudflare.com
 and pick a team name") and wait.
 
 ```sh

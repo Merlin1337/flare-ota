@@ -11,8 +11,9 @@ async function npx(cwd: string, args: string[], env: NodeJS.ProcessEnv = process
   return stdout;
 }
 
-export async function expoConfig(cwd: string): Promise<Record<string, any>> {
-  return JSON.parse(await npx(cwd, ["expo", "config", "--type", "public", "--json"]));
+/** `public` is what devices receive (code-signing fields stripped); `prebuild` is the full config. */
+export async function expoConfig(cwd: string, type: "public" | "prebuild" = "public"): Promise<Record<string, any>> {
+  return JSON.parse(await npx(cwd, ["expo", "config", "--type", type, "--json"]));
 }
 
 /** Resolves the runtime version exactly as expo-updates does in the native build (fingerprint included). */

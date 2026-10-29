@@ -36,7 +36,7 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
 
   let config: Record<string, any> | null = null;
   try {
-    config = await expoConfig(projectDir);
+    config = await expoConfig(projectDir, "prebuild");
     add("Expo config", true, `${config.name ?? "app"} (${config.sdkVersion ?? "SDK ?"})`);
   } catch (error) {
     add("Expo config", false, `npx expo config failed: ${(error as Error).message.split("\n")[0]}`);

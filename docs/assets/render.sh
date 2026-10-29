@@ -7,7 +7,7 @@ CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 shot() { "$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 --allow-file-access-from-files "$@" 2>/dev/null; }
 
 if curl -sf -o /dev/null http://localhost:8799/; then
-  shot --window-size=1280,860 --blink-settings=preferredColorScheme=0 --screenshot=dashboard-dark.png http://localhost:8799/
+  shot --window-size=1560,1000 --blink-settings=preferredColorScheme=0 --screenshot=dashboard-dark.png http://localhost:8799/
 else
   echo "demo server not running: keeping the existing dashboard shots"
 fi

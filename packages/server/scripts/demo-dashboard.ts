@@ -34,10 +34,20 @@ for (const [id, minutes] of [[old.id, 60 * 24 * 9], [fix.id, 60 * 26], [canary.i
 }
 db.prepare("UPDATE update_groups SET actor = 'token:github-actions'").run();
 
+// Minutes ago, following a day/night rhythm so the activity chart looks like a real fleet.
+function recentMinute(): number {
+  for (;;) {
+    const minutes = Math.random() * 60 * 23.9;
+    const hourOfDay = (new Date(Date.now() - minutes * 60_000).getUTCHours() + 2) % 24;
+    const weight = 0.25 + 0.75 * Math.max(0, Math.sin(((hourOfDay - 7) / 24) * 2 * Math.PI)) + (hourOfDay >= 19 && hourOfDay <= 22 ? 0.35 : 0);
+    if (Math.random() < weight / 1.4) return minutes;
+  }
+}
+
 const insert = db.prepare("INSERT INTO devices (client_id, platform, runtime_version, channel, current_update_id, embedded_update_id, served_update_id, app_version, country, first_seen_at, last_seen_at) VALUES (?, ?, ?, 'production', ?, NULL, ?, '2.4.0', 'FR', ?, ?)");
 const pick = (group: typeof fix, platform: string) => group.updates.find((u) => u.platform === platform)!.id;
 function devices(n: number, platform: string, runtime: string, current: string | null, served: string | null) {
-  for (let i = 0; i < n; i++) insert.run(crypto.randomUUID(), platform, runtime, current, served, at(60 * 24 * 40), at(Math.random() < 0.7 ? Math.random() * 60 * 20 : 60 * 24 * (1 + Math.random() * 25)));
+  for (let i = 0; i < n; i++) insert.run(crypto.randomUUID(), platform, runtime, current, served, at(60 * 24 * 40), at(Math.random() < 0.7 ? recentMinute() : 60 * 24 * (1 + Math.random() * 25)));
 }
 devices(1410, "ios", "c41f9a2e7b", pick(fix, "ios"), pick(fix, "ios"));
 devices(388, "ios", "c41f9a2e7b", pick(canary, "ios"), pick(canary, "ios"));
@@ -54,7 +64,12 @@ await services.setRollout(canary.id, 25, "access:alex@acme.dev");
 void ops; void assetHash; void utf8;
 
 createServer(async (req, res) => {
-  const response = await dashboard(new Request(`http://localhost:8799${req.url}`), h.env, new Store(h.env.DB), services, { actor: "access:alex@acme.dev", scope: "admin" });
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const headers = Object.fromEntries(Object.entries(req.headers).filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  // Rendered as if served on a real dashboard host; same-site form posts pass via Sec-Fetch-Site.
+  const request = new Request(`https://ota-admin.acme.dev${req.url}`, { method: req.method, headers, ...(chunks.length ? { body: Buffer.concat(chunks) } : {}) });
+  const response = await dashboard(request, h.env, new Store(h.env.DB), services, { actor: "access:alex@acme.dev", scope: "admin" });
   res.writeHead(response.status, Object.fromEntries(response.headers));
   res.end(Buffer.from(await response.arrayBuffer()));
 }).listen(8799, () => console.log(`groups ${fix.id} ${canary.id}`));

@@ -292,6 +292,25 @@ describe("dashboard", () => {
       body: "channel=production&branch=evil",
     });
     expect(forged.status).toBe(403);
+    const nullOrigin = await local.fetch("/actions/channel", {
+      host: "admin.test",
+      method: "POST",
+      headers: { origin: "null", "sec-fetch-site": "cross-site", "content-type": "application/x-www-form-urlencoded" },
+      body: "channel=production&branch=evil",
+    });
+    expect(nullOrigin.status).toBe(403);
+  });
+
+  it("accepts a same-site form post even when the browser withholds Origin", async () => {
+    const local = await harness({ INSECURE_DASHBOARD: "1" });
+    const post = await local.fetch("/actions/channel", {
+      host: "admin.test",
+      method: "POST",
+      headers: { origin: "null", "sec-fetch-site": "same-origin", "content-type": "application/x-www-form-urlencoded" },
+      body: "channel=beta&branch=staging",
+    });
+    expect(post.status).toBe(303);
+    expect((await local.fetch("/", { host: "admin.test" })).headers.get("referrer-policy")).toBe("same-origin");
   });
 });
 

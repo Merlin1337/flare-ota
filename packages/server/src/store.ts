@@ -415,6 +415,19 @@ export class Store {
     };
   }
 
+  /** Devices by hour of last check-in over the past 24 h (oldest first), and recent launch failures. */
+  async activity(): Promise<{ hourly: number[]; failed7d: number }> {
+    const at = now();
+    const { results } = await this.db
+      .prepare("SELECT CAST((julianday(?) - julianday(last_seen_at)) * 24 AS INTEGER) AS h, COUNT(*) AS n FROM devices WHERE last_seen_at >= ? GROUP BY h")
+      .bind(at, ago(DAY))
+      .all<{ h: number; n: number }>();
+    const hourly = Array.from({ length: 24 }, () => 0);
+    for (const row of results) if (row.h >= 0 && row.h < 24) hourly[23 - row.h] = row.n;
+    const failed = await this.db.prepare("SELECT COUNT(*) AS n FROM device_failures WHERE last_seen_at >= ?").bind(ago(7 * DAY)).first<{ n: number }>();
+    return { hourly, failed7d: failed?.n ?? 0 };
+  }
+
   // ---- tokens ----
 
   async createToken(name: string, scope: Scope, hash: string): Promise<string> {

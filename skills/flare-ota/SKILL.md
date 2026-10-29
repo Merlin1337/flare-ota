@@ -32,7 +32,7 @@ and pick a team name") and wait.
 ```sh
 git clone https://github.com/Merlin1337/flare-ota && cd flare-ota && pnpm install
 npx cf auth login            # interactive: the user completes it in the browser
-pnpm --filter @flare-ota/server setup -- --stage production
+pnpm server:setup --stage production
 ```
 
 Setup is guided and rerunnable. It prints a first admin token once: ask the user to store it in

@@ -1,5 +1,5 @@
 // Guided first deployment of one stage. Safe to rerun: every step reuses what exists.
-//   pnpm --filter @flare-ota/server setup -- --stage production
+//   pnpm server:setup --stage production
 //
 // 1. asks for the non-secret settings and saves them to .env.<stage> (gitignored)
 // 2. generates the code-signing key in memory and the certificate your app embeds
@@ -13,16 +13,37 @@ import { generateKeyPairSync, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
-import { createInterface } from "node:readline/promises";
+import { createInterface } from "node:readline";
 import { env, stageArgs, step, upsertEnvFile, workerName, SERVER_DIR } from "./lib.ts";
 
 const { stage, envFile } = stageArgs();
-const rl = createInterface({ input: process.stdin, output: process.stdout });
+// Lines are queued as they arrive, so piped answers (CI, agents) are never lost between prompts.
+const rl = createInterface({ input: process.stdin });
+const pending: string[] = [];
+const waiters: ((line: string | null) => void)[] = [];
+let closed = false;
+rl.on("line", (line) => (waiters.length ? waiters.shift()!(line) : pending.push(line)));
+rl.on("close", () => {
+  closed = true;
+  while (waiters.length) waiters.shift()!(null);
+});
+
+async function prompt(question: string): Promise<string | null> {
+  process.stdout.write(question);
+  if (pending.length) return pending.shift()!;
+  if (closed) return null;
+  return new Promise((resolve) => waiters.push(resolve));
+}
 
 async function ask(key: string, question: string, fallback?: string): Promise<string> {
   const current = env(key) ?? fallback;
-  const answer = (await rl.question(`${question}${current ? ` [${current}]` : ""}: `)).trim() || current || "";
-  if (!answer) return ask(key, question, fallback);
+  const line = await prompt(`${question}${current ? ` [${current}]` : ""}: `);
+  const answer = line?.trim() || current || "";
+  if (!answer) {
+    if (line === null) throw new Error(`No value for ${key}: set it in the environment or ${envFile}.`);
+    return ask(key, question, fallback);
+  }
+  process.stdout.write(line === null ? "\n" : "");
   process.env[key] = answer;
   return answer;
 }
@@ -110,7 +131,7 @@ step("First admin token");
 const me = env("FLARE_OTA_ACCESS_EMAILS")!.split(",")[0]!.trim();
 run("bootstrap-token.ts", ["--name", me]);
 
-const waf = (await rl.question("\nApply the recommended WAF rules on the zone now? [Y/n]: ")).trim().toLowerCase();
+const waf = ((await prompt("\nApply the recommended WAF rules on the zone now? [Y/n]: ")) ?? "").trim().toLowerCase();
 if (waf !== "n" && waf !== "no") run("waf.ts");
 
 step("Health check");
@@ -121,4 +142,4 @@ console.log(`\nDone. Next: in your Expo app run
 then build a new binary. On macOS, deploy again later with:
   FLARE_OTA_SIGNING_KEY="$(security find-generic-password -s ${keyService} -a flare-ota -w | base64 -d)" \\
   FLARE_OTA_PREVIEW_SECRET="$(security find-generic-password -s ${previewService} -a flare-ota -w)" \\
-  pnpm --filter @flare-ota/server deploy -- --stage ${stage}`);
+  pnpm server:deploy --stage ${stage}`);

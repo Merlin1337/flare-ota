@@ -1,6 +1,6 @@
 // Creates the first admin token directly in D1 (only its SHA-256 is stored) and prints it once.
 // Use it to open the API/MCP, then create narrower tokens (publish for CI, read for dashboards).
-//   pnpm --filter @flare-ota/server bootstrap-token -- --stage production --name you@example.com
+//   pnpm server:bootstrap-token --stage production --name you@example.com
 import { createHash, randomBytes } from "node:crypto";
 import { cfJson, databaseId, stageArgs, workerName } from "./lib.ts";
 

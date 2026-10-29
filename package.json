@@ -10,7 +10,15 @@
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
-    "check": "pnpm typecheck && pnpm test"
+    "check": "pnpm typecheck && pnpm test",
+    "server:setup": "pnpm --filter @flare-ota/server run setup",
+    "server:deploy": "pnpm --filter @flare-ota/server run deploy",
+    "server:migrate": "pnpm --filter @flare-ota/server run migrate",
+    "server:access": "pnpm --filter @flare-ota/server run access",
+    "server:waf": "pnpm --filter @flare-ota/server run waf",
+    "server:deploy-token": "pnpm --filter @flare-ota/server run deploy-token",
+    "server:bootstrap-token": "pnpm --filter @flare-ota/server run bootstrap-token",
+    "server:doctor": "pnpm --filter @flare-ota/server run doctor"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

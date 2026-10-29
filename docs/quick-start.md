@@ -15,7 +15,7 @@ From zero to an update on a device. Budget 20 minutes, plus one native build.
 git clone https://github.com/Merlin1337/flare-ota && cd flare-ota
 pnpm install
 npx cf auth login
-pnpm --filter @flare-ota/server setup -- --stage production
+pnpm server:setup --stage production
 ```
 
 `setup` asks for your account ID, two hostnames (updates and dashboard), the emails allowed on the

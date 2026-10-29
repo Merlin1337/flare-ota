@@ -1,6 +1,6 @@
 // Creates a Cloudflare API token scoped to what deploying flare-ota needs, for CI. It cannot
 // create other tokens. Prints the value once: store it as a CI secret (CLOUDFLARE_API_TOKEN).
-//   pnpm --filter @flare-ota/server deploy-token -- --stage production [--with-access] [--with-waf]
+//   pnpm server:deploy-token --stage production [--with-access] [--with-waf]
 import { cfJson, requireEnv, stageArgs, step, zoneFor } from "./lib.ts";
 
 const { stage, values } = stageArgs({ "with-access": { type: "boolean" }, "with-waf": { type: "boolean" } });

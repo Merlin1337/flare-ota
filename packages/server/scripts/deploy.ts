@@ -1,5 +1,5 @@
 // Builds and deploys one stage: database + migrations first, then the Worker with its secrets.
-//   FLARE_OTA_SIGNING_KEY="$(cat key.pem)" pnpm --filter @flare-ota/server deploy -- --stage production
+//   FLARE_OTA_SIGNING_KEY="$(cat key.pem)" pnpm server:deploy --stage production
 // Secrets come from the environment (keychain, password manager or CI secrets), never from the repo:
 //   FLARE_OTA_SIGNING_KEY      PEM private key matching the certificate in your app
 //   FLARE_OTA_PREVIEW_SECRET   random string for preview links (optional; previews off without it)
@@ -11,7 +11,7 @@ requireEnv("FLARE_OTA_UPDATES_HOST", "Devices need a stable hostname.");
 const signingKey = requireEnv("FLARE_OTA_SIGNING_KEY", "Pass the PEM private key through the environment.");
 if (!/-----BEGIN (RSA )?PRIVATE KEY-----/.test(signingKey)) throw new Error("FLARE_OTA_SIGNING_KEY does not look like a PEM private key.");
 if (env("FLARE_OTA_DASHBOARD_HOST") && (!env("FLARE_OTA_ACCESS_AUD") || !env("FLARE_OTA_ACCESS_TEAM_DOMAIN"))) {
-  throw new Error("The dashboard needs Cloudflare Access: run `pnpm --filter @flare-ota/server access` first (it fills FLARE_OTA_ACCESS_AUD).");
+  throw new Error("The dashboard needs Cloudflare Access: run `pnpm server:access ` first (it fills FLARE_OTA_ACCESS_AUD).");
 }
 
 const name = workerName(stage);

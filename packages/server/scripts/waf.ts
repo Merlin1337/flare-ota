@@ -3,7 +3,7 @@
 //  - /api and /mcp require a Bearer header before reaching the Worker
 //  - device routes are GET/HEAD only, with bounded header sizes
 //  - /manifest is rate limited per IP (Free plan: one path-only rule, so it applies zone-wide)
-//   pnpm --filter @flare-ota/server waf -- --stage production
+//   pnpm server:waf --stage production
 import { cfJson, env, requireEnv, stageArgs, step, zoneFor } from "./lib.ts";
 
 const { stage } = stageArgs();

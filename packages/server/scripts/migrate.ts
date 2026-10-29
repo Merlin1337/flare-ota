@@ -1,5 +1,5 @@
 // Creates the stage's D1 database if needed and applies pending migrations.
-//   pnpm --filter @flare-ota/server migrate -- --stage production
+//   pnpm server:migrate --stage production
 import { cfLive, ensureDatabase, stageArgs, step, workerName } from "./lib.ts";
 
 const { stage } = stageArgs();

@@ -1,6 +1,6 @@
 // Puts the dashboard hostname behind Cloudflare Access (creates or reuses the application) and
 // records its audience tag in .env.<stage>, so the Worker can verify Access JWTs itself.
-//   FLARE_OTA_ACCESS_EMAILS=you@example.com pnpm --filter @flare-ota/server access -- --stage production
+//   FLARE_OTA_ACCESS_EMAILS=you@example.com pnpm server:access --stage production
 import { cfJson, env, requireEnv, stageArgs, step, upsertEnvFile } from "./lib.ts";
 
 const { stage, envFile } = stageArgs();

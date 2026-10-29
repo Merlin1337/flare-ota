@@ -1,5 +1,5 @@
 // Checks a deployed stage from the outside: health, protocol and signing, Access in front of
-// the dashboard, API auth, and the WAF.   pnpm --filter @flare-ota/server doctor -- --stage production
+// the dashboard, API auth, and the WAF.   pnpm server:doctor --stage production
 import { env, requireEnv, stageArgs } from "./lib.ts";
 
 const { stage } = stageArgs();

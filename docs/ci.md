@@ -47,7 +47,7 @@ one built on macOS, so CI targets the same devices as your store builds.
 ## Deploy the server from CI
 
 ```sh
-pnpm --filter @flare-ota/server deploy-token -- --stage production   # scoped, cannot mint tokens
+pnpm server:deploy-token --stage production   # scoped, cannot mint tokens
 ```
 
 Store the printed value as `CLOUDFLARE_API_TOKEN`, plus `CLOUDFLARE_ACCOUNT_ID`,
@@ -56,7 +56,7 @@ from `.env.production` as variables:
 
 ```yaml
 - run: pnpm install --frozen-lockfile
-- run: pnpm --filter @flare-ota/server deploy -- --stage production
+- run: pnpm server:deploy --stage production
   env:
     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

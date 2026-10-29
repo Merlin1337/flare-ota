@@ -301,6 +301,23 @@ describe("dashboard", () => {
     expect(nullOrigin.status).toBe(403);
   });
 
+  it("shows the app's name and icon from its latest publish", async () => {
+    const local = await harness({ INSECURE_DASHBOARD: "1" });
+    const ci = await local.token("publish");
+    const icon = utf8("<svg xmlns='http://www.w3.org/2000/svg'/>");
+    const hash = await assetHash(icon);
+    await local.fetch(`/api/v1/assets/${hash}`, { method: "PUT", headers: { ...bearer(ci), "content-type": "image/svg+xml", "content-length": String(icon.length) }, body: icon });
+    const ios = await uploadBundle(local, ci, "app");
+    const appIcon = { hash, key: "k", contentType: "image/svg+xml", fileExtension: ".svg" };
+    expect((await publish(local, ci, { branch: "production", message: "x", expoConfig: { name: "Acme Pay", version: "2.4.0" }, appIcon, updates: { ios } })).status).toBe(201);
+    const html = await (await local.fetch("/", { host: "admin.test" })).text();
+    expect(html).toContain("Acme Pay");
+    const served = await local.fetch("/_app/icon", { host: "admin.test" });
+    expect(served.headers.get("content-type")).toBe("image/svg+xml");
+    expect(served.headers.get("content-security-policy")).toContain("default-src 'none'");
+    expect((await publish(local, ci, { branch: "production", message: "y", appIcon: { ...appIcon, contentType: "text/html" }, updates: { ios } })).status).toBe(400);
+  });
+
   it("shows what a rollback would do before doing it", async () => {
     const local = await harness({ INSECURE_DASHBOARD: "1" });
     const ci = await local.token("publish");

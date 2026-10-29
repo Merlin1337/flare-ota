@@ -86,6 +86,24 @@ describe("publish end to end", () => {
     expect(JSON.parse(parts.manifest!.body).id).toBe(group.updates[0]!.id);
   });
 
+  it("sends the app icon so the dashboard can show the app", async () => {
+    const project = await mkdtemp(join(tmpdir(), "flare-icon-"));
+    await mkdir(join(project, "assets"), { recursive: true });
+    await writeFile(join(project, "assets/icon.png"), "png-icon-bytes");
+    const client = new Client({ server: base, token: await h.token("publish", "icon") });
+    const tools = {
+      expoConfig: async () => ({ name: "Acme", version: "2.4.0", icon: "./assets/icon.png", ios: { bundleIdentifier: "com.acme.app" }, updates: { url: `${base}/manifest` } }),
+      exportBundles: async (_cwd: string, _platforms: unknown, out: string) => fakeExport(out, "console.log('icon')"),
+      runtimeVersion: async () => "rt-1",
+      gitCommit: async () => undefined,
+    };
+    await publishUpdate(client, { projectDir: project, branch: "production", message: "with icon", platforms: ["ios"], rolloutPercent: 100, tools });
+    const { Store } = await import("../../server/src/store.ts");
+    const identity = await new Store(h.env.DB).appIdentity();
+    expect(identity).toMatchObject({ name: "Acme", version: "2.4.0", iosBundleId: "com.acme.app" });
+    expect(h.bucket.objects.get(`assets/${identity.iconHash}`)?.contentType).toBe("image/png");
+  });
+
   it("refuses to publish to a server the app does not point at", async () => {
     const client = new Client({ server: base, token: await h.token("publish") });
     const tools = { expoConfig: async () => ({ updates: { url: "https://elsewhere.example/manifest" } }) };

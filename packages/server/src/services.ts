@@ -51,7 +51,12 @@ export function parsePublishInput(body: unknown): PublishInput {
     };
   }
   if (Object.keys(updates).length === 0) throw new Invalid("Publish at least one platform.");
-  return { branch: input.branch, message: input.message, gitCommit: input.gitCommit ?? undefined, rolloutPercent: rollout, expoConfig: input.expoConfig ?? undefined, updates };
+  let appIcon: AssetRef | undefined;
+  if (input.appIcon != null) {
+    appIcon = assetRef(input.appIcon, "appIcon");
+    if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(appIcon.contentType)) throw new Invalid("appIcon must be a PNG, JPEG, WebP or SVG image.");
+  }
+  return { branch: input.branch, message: input.message, gitCommit: input.gitCommit ?? undefined, rolloutPercent: rollout, expoConfig: input.expoConfig ?? undefined, appIcon, updates };
 }
 
 export class Services {
@@ -69,6 +74,7 @@ export class Services {
       hashes.add(update.launchAsset.hash);
       for (const asset of update.assets) hashes.add(asset.hash);
     }
+    if (input.appIcon) hashes.add(input.appIcon.hash);
     const existing = await this.store.existingAssets([...hashes]);
     const missing = [...hashes].filter((hash) => !existing.has(hash));
     if (missing.length) throw new Invalid(`${missing.length} asset(s) were not uploaded, e.g. ${missing[0]}.`);

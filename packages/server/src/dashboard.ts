@@ -2,7 +2,7 @@
 // app.ts). No JavaScript: charts are inline SVG, mutations are plain form POSTs with an Origin
 // check, attributed to the Access user.
 
-import { SCOPES, isPlatform, type AuditEntry, type GroupSummary, type Scope, type UpdateMetrics } from "@flare-ota/core";
+import { SCOPES, isPlatform, type AppIdentity, type AuditEntry, type GroupSummary, type Scope, type UpdateMetrics } from "@flare-ota/core";
 import qrcode from "qrcode-generator";
 import { JAKARTA_WOFF2 } from "./fonts.ts";
 import type { Principal } from "./auth.ts";
@@ -154,11 +154,16 @@ dialog.modal::backdrop{background:rgba(5,5,6,.6);backdrop-filter:blur(6px)}
 dialog.modal[open]{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}}
 .modal .in{padding:26px}.modal h2{margin:0 0 6px;font-size:21px;font-weight:750;letter-spacing:-.03em}
 .choice{display:block;position:relative;margin-top:12px;padding:16px 16px 16px 46px;border-radius:16px;border:1px solid var(--line2);background:var(--panel);cursor:pointer}
-.choice input{position:absolute;left:16px;top:18px;width:16px;height:16px;margin:0;accent-color:var(--accent)}
+.choice input{position:absolute;left:16px;top:18px;width:18px;height:18px;margin:0;padding:0;-webkit-appearance:none;appearance:none;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel2);cursor:pointer;transition:border-color .15s}.choice input:checked{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 0 4px,transparent 4.6px),var(--panel2)}.choice input:focus{outline:none}.choice input:focus-visible{box-shadow:0 0 0 3px rgba(255,122,26,.28)}.choice input:disabled{opacity:.4;cursor:not-allowed}.modal h2:focus{outline:none}
 .choice:has(input:checked){border-color:rgba(255,122,26,.55);background:linear-gradient(180deg,rgba(255,122,26,.08),transparent)}
 .choice b{display:block;font-size:14.5px}.choice small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
 .choice ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}.choice li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg2)}
 .modal .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.appcard{display:flex;align-items:center;gap:12px;margin:0 2px 22px;padding:12px;border-radius:18px;border:1px solid var(--line);background:var(--panel)}
+.appcard img,.appcard .ph{width:44px;height:44px;flex:none;border-radius:12px;object-fit:cover;background:var(--raise);border:1px solid var(--line2)}
+.appcard .ph{display:grid;place-items:center;font-weight:750;font-size:18px;color:var(--fg2)}
+.appcard b{display:block;font-size:15px;font-weight:720;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.appcard small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.appcard>div{min-width:0}
 .codebox{position:relative}.codebox pre.cmd{padding-right:44px}
 .copy{position:absolute;top:7px;right:7px;width:30px;height:30px;padding:0;justify-content:center;border-radius:9px;background:var(--panel2);color:var(--muted)}
 .copy:hover{color:var(--fg)}.copy svg{width:15px;height:15px;stroke-width:1.8}.copy .i-done{display:none}.copy.done{color:var(--ok);border-color:rgba(61,220,151,.45)}.copy.done .i-copy{display:none}.copy.done .i-done{display:block}
@@ -225,7 +230,7 @@ function page(title: string, actor: string, body: string, active = "", host = ""
   const link = (href: string, label: string, icon: string) => `<a href="${href}" class="${active === href ? "on" : ""}">${icon}${label}</a>`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} · flare-ota</title><link rel="preload" href="/_fonts/jakarta.woff2" as="font" type="font/woff2" crossorigin><style>${STYLE}</style><script src="/_assets/ui.js?v=${UI_VERSION}" defer></script></head><body${canonical ? ` data-canonical="${esc(canonical)}"` : ""}><div class="app">
-<aside><a class="brand" href="/"><span class="mark">${FLAME}</span>flare-ota</a>
+<aside><a class="brand" href="/"><span class="mark">${FLAME}</span>flare-ota</a><!--app-card-->
 <nav>${link("/", "Releases", ICON.overview)}${link("/tokens", "Tokens", ICON.tokens)}${link("/audit", "Audit log", ICON.audit)}</nav>
 <div class="status"><b><span class="dot live"></span>All systems normal</b><small>${esc(host || "updates server")}</small></div>
 <div class="me"><span class="avatar">${esc((who[0] ?? "?").toUpperCase())}</span><div><span>${esc(who)}</span><small>Signed in with Access</small></div></div></aside>
@@ -234,7 +239,7 @@ function page(title: string, actor: string, body: string, active = "", host = ""
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
-      "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+      "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
       "x-content-type-options": "nosniff",
       // same-origin, not no-referrer: with no-referrer, browsers send `Origin: null` on form posts,
       // which the CSRF check below would (rightly) refuse.
@@ -478,7 +483,7 @@ async function rollbackDialog(store: Store, branch: string): Promise<string> {
   );
   const canPrevious = targets.every((t) => t.target);
   return `<dialog id="rollback-dialog" class="modal"><form method="post" action="/actions/rollback" class="in" style="display:block"><input type="hidden" name="branch" value="${esc(branch)}">
-<h2>Roll back ${esc(branch)}</h2><p class="sub" style="margin:0">Every device on this branch switches on its next launches. Nothing is deleted; you can publish again any time.</p>
+<h2 tabindex="-1" autofocus>Roll back ${esc(branch)}</h2><p class="sub" style="margin:0">Every device on this branch switches on its next launches. Nothing is deleted; you can publish again any time.</p>
 <label class="choice"><input type="radio" name="to" value="previous" ${canPrevious ? "checked" : "disabled"}><b>To the previous release</b><small>Re-sends the last good bundle as a new update.</small><ul>${previous.join("")}</ul></label>
 <label class="choice"><input type="radio" name="to" value="embedded" ${canPrevious ? "" : "checked"}><b>To the app's built-in code</b><small>Devices drop every OTA update and run what shipped in their binary.</small></label>
 <div class="acts"><button type="submit" formmethod="dialog" formnovalidate>Cancel</button><button class="primary" style="background:var(--bad)">Roll back now</button></div></form></dialog>`;
@@ -575,7 +580,7 @@ const SCOPE_INFO: Record<Scope, [string, string]> = {
 };
 
 function tokenForm(): string {
-  return `<form method="post" action="/actions/token-create" class="in" style="display:block"><h2>New token</h2><p class="sub" style="margin:0 0 18px">Shown once, then only its hash is kept.</p>
+  return `<form method="post" action="/actions/token-create" class="in" style="display:block"><h2 tabindex="-1" autofocus>New token</h2><p class="sub" style="margin:0 0 18px">Shown once, then only its hash is kept.</p>
 <label style="display:block;font-size:13px;font-weight:650;margin-bottom:6px">Name</label><input name="name" placeholder="e.g. github-actions, my-laptop" required pattern="[\\w .@:-]{1,64}" style="width:100%">
 <div style="font-size:13px;font-weight:650;margin:18px 0 0">Permission</div>
 ${SCOPES.map((scope) => `<label class="choice"><input type="radio" name="scope" value="${scope}" ${scope === "publish" ? "checked" : ""}><b>${SCOPE_INFO[scope][0]}${scope === "publish" ? ' <span class="chip roll" style="margin-left:6px">Recommended</span>' : ""}</b><small>${SCOPE_INFO[scope][1]}</small></label>`).join("")}
@@ -601,6 +606,13 @@ function qrSvg(text: string): string {
   return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
 }
 
+function appCard(app: AppIdentity): string {
+  if (!app.name && !app.iconHash) return "";
+  const icon = app.iconHash ? `<img src="/_app/icon?h=${esc(app.iconHash.slice(0, 12))}" alt="">` : `<span class="ph">${esc((app.name ?? "?")[0]!.toUpperCase())}</span>`;
+  const meta = [app.version ? `v${app.version}` : "", app.iosBundleId ?? app.androidPackage ?? ""].filter(Boolean).join(" · ");
+  return `<div class="appcard">${icon}<div><b>${esc(app.name ?? "Your app")}</b><small>${esc(meta || "Expo app")}</small></div></div>`;
+}
+
 /** The only form fields the dashboard reads; anything else is ignored. */
 const FORM_FIELDS = ["groupId", "percent", "branch", "to", "platform", "channel", "ttlMinutes", "scope", "name", "id"];
 
@@ -615,6 +627,20 @@ async function form(request: Request): Promise<Record<string, string>> {
 }
 
 export async function dashboard(request: Request, env: Env, store: Store, services: Services, principal: Principal): Promise<Response> {
+  const url = new URL(request.url);
+  if (request.method === "GET" && url.pathname === "/_app/icon") {
+    const { iconHash } = await store.appIdentity();
+    const object = iconHash ? await env.BUCKET.get(`assets/${iconHash}`) : null;
+    if (!object) return new Response("Not found", { status: 404 });
+    return new Response(object.body, { headers: { "content-type": object.httpMetadata?.contentType ?? "image/png", "cache-control": "private, max-age=3600", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'" } });
+  }
+  const response = await render(request, env, store, services, principal);
+  if (!(response.headers.get("content-type") ?? "").startsWith("text/html")) return response;
+  const html = (await response.text()).replace("<!--app-card-->", appCard(await store.appIdentity()));
+  return new Response(html, { status: response.status, headers: response.headers });
+}
+
+async function render(request: Request, env: Env, store: Store, services: Services, principal: Principal): Promise<Response> {
   const url = new URL(request.url);
   const actor = principal.actor;
   const host = url.hostname;

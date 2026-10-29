@@ -1,7 +1,7 @@
 // All D1 access. D1 batches run as one transaction, which is what makes publishing atomic.
 
 import type {
-  AssetRef, AuditEntry, GroupKind, GroupSummary, Overview, Platform, PublishInput, Scope, TokenSummary, UpdateMetrics, UpdateSummary,
+  AppIdentity, AssetRef, AuditEntry, GroupKind, GroupSummary, Overview, Platform, PublishInput, Scope, TokenSummary, UpdateMetrics, UpdateSummary,
 } from "@flare-ota/core";
 import type { D1Database } from "./env.ts";
 import type { Candidate } from "./protocol.ts";
@@ -180,8 +180,8 @@ export class Store {
     const statements = [
       this.db.prepare("INSERT OR IGNORE INTO branches (name, created_at) VALUES (?, ?)").bind(input.branch, at),
       this.db
-        .prepare("INSERT INTO update_groups (id, branch_name, message, git_commit, actor, kind, source_group_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-        .bind(groupId, input.branch, input.message, input.gitCommit ?? null, options.actor, options.kind ?? "bundle", options.sourceGroupId ?? null, at),
+        .prepare("INSERT INTO update_groups (id, branch_name, message, git_commit, actor, kind, source_group_id, created_at, app_icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .bind(groupId, input.branch, input.message, input.gitCommit ?? null, options.actor, options.kind ?? "bundle", options.sourceGroupId ?? null, at, input.appIcon?.hash ?? null),
     ];
     for (const [platform, update] of Object.entries(input.updates)) {
       if (!update) continue;
@@ -428,6 +428,25 @@ export class Store {
     return { hourly, failed7d: failed?.n ?? 0 };
   }
 
+  /** Name, version, bundle ids and icon of the app, from its newest publish (production first). */
+  async appIdentity(): Promise<AppIdentity> {
+    const row = await this.db
+      .prepare(
+        `SELECT u.expo_config, (SELECT g2.app_icon FROM update_groups g2 WHERE g2.app_icon IS NOT NULL AND g2.published_at IS NOT NULL ORDER BY g2.created_at DESC LIMIT 1) AS icon
+         FROM updates u JOIN update_groups g ON g.id = u.group_id
+         WHERE g.published_at IS NOT NULL AND u.expo_config IS NOT NULL
+         ORDER BY (g.branch_name = 'production') DESC, u.created_at DESC LIMIT 1`,
+      )
+      .first<{ expo_config: string; icon: string | null }>();
+    const icon = row?.icon ?? (await this.db.prepare("SELECT app_icon FROM update_groups WHERE app_icon IS NOT NULL AND published_at IS NOT NULL ORDER BY created_at DESC LIMIT 1").first<{ app_icon: string }>())?.app_icon ?? null;
+    let config: Record<string, any> = {};
+    try {
+      config = row ? (JSON.parse(row.expo_config) as Record<string, any>) : {};
+    } catch {}
+    const str = (v: unknown) => (typeof v === "string" && v.length <= 120 ? v : null);
+    return { name: str(config.name), version: str(config.version), iosBundleId: str(config.ios?.bundleIdentifier), androidPackage: str(config.android?.package), iconHash: icon };
+  }
+
   // ---- tokens ----
 
   async createToken(name: string, scope: Scope, hash: string): Promise<string> {
@@ -516,6 +535,7 @@ export class Store {
          refs AS (
            SELECT json_extract(launch_asset, '$.hash') AS hash FROM kept WHERE launch_asset IS NOT NULL
            UNION SELECT json_extract(j.value, '$.hash') FROM kept, json_each(kept.assets) AS j
+           UNION SELECT app_icon FROM update_groups WHERE app_icon IS NOT NULL AND published_at IS NOT NULL
          )
          SELECT hash FROM assets WHERE touched_at < ?3 AND hash NOT IN (SELECT hash FROM refs WHERE hash IS NOT NULL) LIMIT ?4`,
       )

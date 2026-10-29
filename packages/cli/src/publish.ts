@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import type { AssetRef, GroupSummary, Platform, PlatformUpdateInput } from "@flare-ota/core";
 import type { Client } from "./api.ts";
 import { expoConfig, exportBundles, gitCommit, runtimeVersion } from "./expo.ts";
@@ -102,6 +102,9 @@ export async function publishUpdate(client: Client, options: PublishOptions): Pr
       log(`${platform}: runtime ${rv}`);
       updates[platform] = { runtimeVersion: rv, ...perPlatform[platform]! };
     }
+    // The app icon travels with the publish so the dashboard can show which app this is.
+    const appIcon = await iconFile(options.projectDir, config);
+    if (appIcon && !files.has(appIcon.ref.hash)) files.set(appIcon.ref.hash, appIcon);
     const { missing } = await client.post<{ missing: string[] }>("/api/v1/assets/missing", { hashes: [...files.keys()] });
     log(`Uploading ${missing.length} of ${files.size} files…`);
     await pool(missing, 4, async (hash) => {
@@ -115,9 +118,31 @@ export async function publishUpdate(client: Client, options: PublishOptions): Pr
       gitCommit: await tools.gitCommit(options.projectDir),
       rolloutPercent: options.rolloutPercent,
       expoConfig: config,
+      ...(appIcon ? { appIcon: appIcon.ref } : {}),
       updates,
     });
   } finally {
     await rm(outputDir, { recursive: true, force: true });
   }
+}
+
+const ICON_TYPES: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml" };
+
+/** The icon declared in the app config (icon, then iOS, then Android), if it is a readable image. */
+export async function iconFile(projectDir: string, config: Record<string, any>): Promise<LocalFile | null> {
+  for (const candidate of [config.icon, config.ios?.icon, config.android?.icon]) {
+    if (typeof candidate !== "string") continue;
+    const path = join(projectDir, candidate);
+    const type = ICON_TYPES[extname(path).toLowerCase()];
+    if (!type) continue;
+    try {
+      await access(path);
+    } catch {
+      continue;
+    }
+    const bytes = await readFile(path);
+    if (bytes.length > 2 * 1024 * 1024) continue;
+    return { ref: refFor(bytes, type, extname(path).toLowerCase()), path };
+  }
+  return null;
 }

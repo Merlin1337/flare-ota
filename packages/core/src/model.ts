@@ -44,6 +44,8 @@ export interface PublishInput {
   rolloutPercent?: number | undefined;
   /** Public Expo config, served to the app as `extra.expoClient`. */
   expoConfig?: Record<string, unknown> | undefined;
+  /** The app icon, uploaded like any asset, so the dashboard can show which app this is. */
+  appIcon?: AssetRef | undefined;
   updates: Partial<Record<Platform, PlatformUpdateInput>>;
 }
 
@@ -110,4 +112,12 @@ export interface TokenSummary {
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
+}
+
+export interface AppIdentity {
+  name: string | null;
+  version: string | null;
+  iosBundleId: string | null;
+  androidPackage: string | null;
+  iconHash: string | null;
 }

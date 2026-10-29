@@ -2,7 +2,7 @@
 //   pnpm --filter @flare-ota/server demo            sample releases and devices
 //   pnpm --filter @flare-ota/server demo -- --empty a fresh deployment (first-run checklist)
 import { createServer } from "node:http";
-import { utf8 } from "@flare-ota/core";
+import { hex, sha256, utf8 } from "@flare-ota/core";
 import { dashboard } from "../src/dashboard.ts";
 import { Services } from "../src/services.ts";
 import { Store } from "../src/store.ts";
@@ -15,10 +15,17 @@ const ci = empty ? ops : await h.token("publish", "github-actions");
 const db = h.db.raw;
 const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString();
 
+// A fictional app identity: name, version, bundle id and an icon, as \`flare-ota publish\` sends them.
+const ICON = utf8(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d5dfc"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs><rect width="96" height="96" rx="22" fill="url(#g)"/><path d="M30 64 46 26h6l16 38h-8l-4-10H42l-4 10zm14-17h10l-5-13z" fill="#fff"/></svg>`);
+const iconHash = await assetHash(ICON);
+await h.fetch(`/api/v1/assets/${iconHash}`, { method: "PUT", headers: { authorization: `Bearer ${ci}`, "content-type": "image/svg+xml", "content-length": String(ICON.length) }, body: ICON });
+const appIcon = { hash: iconHash, key: hex(await sha256(ICON)), contentType: "image/svg+xml", fileExtension: ".svg" };
+const expoConfig = { name: "Acme Pay", version: "2.4.0", ios: { bundleIdentifier: "com.acme.pay" }, android: { package: "com.acme.pay" } };
+
 async function release(branch: string, message: string, rollout = 100, runtime = "c41f9a2e7b") {
   const ios = await uploadBundle(h, ci, `${branch}:${message}:ios`, runtime);
   const android = await uploadBundle(h, ci, `${branch}:${message}:android`, runtime);
-  const res = await publish(h, ci, { branch, message, rolloutPercent: rollout, gitCommit: Math.random().toString(16).slice(2, 12), updates: { ios, android } });
+  const res = await publish(h, ci, { branch, message, rolloutPercent: rollout, gitCommit: Math.random().toString(16).slice(2, 12), expoConfig, appIcon, updates: { ios, android } });
   return (await res.json()) as { id: string; updates: { id: string; platform: string }[] };
 }
 
@@ -65,7 +72,7 @@ if (!empty) {
   for (let i = 0; i < 3; i++) fail.run(pick(canary, "android"), crypto.randomUUID(), at(30), at(30));
 
   await services.setRollout(canary.id, 25, "access:alex@acme.dev");
-  void ops; void assetHash; void utf8;
+  void ops;
   seeded = `groups ${fix.id} ${canary.id}`;
 }
 

@@ -1,10 +1,12 @@
-import { createHash } from "node:crypto";
+import { createHash, X509Certificate } from "node:crypto";
 import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { extname, join } from "node:path";
-import type { AssetRef, GroupSummary, Platform, PlatformUpdateInput } from "@flare-ota/core";
+import { basename, extname, join } from "node:path";
+import { scopeAllows, type AssetRef, type GroupSummary, type Overview, type Platform, type PlatformUpdateInput, type Scope } from "@flare-ota/core";
 import type { Client } from "./api.ts";
+import { CODE_SIGNING_EKU, probeSignature } from "./doctor.ts";
 import { expoConfig, exportBundles, gitCommit, runtimeVersion } from "./expo.ts";
+import { bytes, c, progressBar, short, silent, type Reporter } from "./ui.ts";
 
 const CONTENT_TYPES: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", avif: "image/avif",
@@ -22,6 +24,7 @@ interface ExportMetadata {
 export interface LocalFile {
   ref: AssetRef;
   path: string;
+  size: number;
 }
 
 function refFor(bytes: Buffer, contentType: string, fileExtension: string): AssetRef {
@@ -38,14 +41,16 @@ export async function readExport(outputDir: string, platforms: Platform[]) {
     const entry = metadata.fileMetadata[platform];
     if (!entry) throw new Error(`expo export produced nothing for ${platform}.`);
     const bundlePath = join(outputDir, entry.bundle);
-    const launchAsset = refFor(await readFile(bundlePath), "application/javascript", ".bundle");
-    files.set(launchAsset.hash, { ref: launchAsset, path: bundlePath });
+    const bundle = await readFile(bundlePath);
+    const launchAsset = refFor(bundle, "application/javascript", ".bundle");
+    files.set(launchAsset.hash, { ref: launchAsset, path: bundlePath, size: bundle.length });
     const assets: AssetRef[] = [];
     for (const asset of entry.assets) {
       const path = join(outputDir, asset.path);
       const ext = asset.ext.replace(/^\./, "").toLowerCase();
-      const ref = refFor(await readFile(path), CONTENT_TYPES[ext] ?? "application/octet-stream", `.${ext}`);
-      if (!files.has(ref.hash)) files.set(ref.hash, { ref, path });
+      const content = await readFile(path);
+      const ref = refFor(content, CONTENT_TYPES[ext] ?? "application/octet-stream", `.${ext}`);
+      if (!files.has(ref.hash)) files.set(ref.hash, { ref, path, size: content.length });
       if (!assets.some((a) => a.hash === ref.hash)) assets.push(ref);
     }
     perPlatform[platform] = { launchAsset, assets };
@@ -70,7 +75,9 @@ export interface PublishOptions {
   rolloutPercent: number;
   /** Skip the check that the app's updates.url points at this server. */
   force?: boolean;
-  log?: (line: string) => void;
+  /** Run the signing checks before exporting (default true). */
+  checks?: boolean;
+  reporter?: Reporter;
   /** Expo tooling, replaceable in tests. */
   tools?: Partial<ExpoTools>;
 }
@@ -82,45 +89,152 @@ export interface ExpoTools {
   gitCommit: typeof gitCommit;
 }
 
-export async function publishUpdate(client: Client, options: PublishOptions): Promise<GroupSummary> {
-  const log = options.log ?? (() => {});
+export interface PublishResult {
+  group: GroupSummary;
+  /** Dashboard URL when the server knows its dashboard host. */
+  dashboardUrl: string | null;
+  /** Devices seen on each platform's runtime in the last 30 days, when the token can read the overview. */
+  devices: Partial<Record<Platform, number>>;
+  uploaded: { files: number; bytes: number; reused: number };
+}
+
+interface Whoami {
+  actor: string;
+  scope: Scope;
+  dashboardUrl?: string | null;
+}
+
+export async function publishUpdate(client: Client, options: PublishOptions): Promise<PublishResult> {
+  const r = options.reporter ?? silent;
   const tools: ExpoTools = { expoConfig, exportBundles, runtimeVersion, gitCommit, ...options.tools };
-  const config = await tools.expoConfig(options.projectDir);
-  const updatesUrl: string | undefined = config.updates?.url;
-  const expected = `${client.options.server}/manifest`;
-  if (!options.force && updatesUrl !== expected) {
-    throw new Error(`The app's updates.url is ${updatesUrl ?? "(unset)"} but this server is ${expected}. Run \`flare-ota init\` or select the matching app config (--force to override).`);
+  const checks = options.checks !== false;
+  const dir = options.projectDir;
+
+  const { config, full } = await r.step(
+    "App config",
+    async () => {
+      const [config, full] = await Promise.all([tools.expoConfig(dir), checks ? tools.expoConfig(dir, "prebuild") : null]);
+      const updatesUrl: string | undefined = config.updates?.url;
+      const expected = `${client.options.server}/manifest`;
+      if (!options.force && updatesUrl !== expected) {
+        throw new Error(`updates.url is ${updatesUrl ?? "(unset)"}, this server is ${expected}. Run \`flare-ota init\` or select the matching app config (--force to override).`);
+      }
+      return { config, full };
+    },
+    ({ config }) => [config.name, config.version].filter(Boolean).join(" ") + (config.sdkVersion ? c.dim(` · SDK ${String(config.sdkVersion).split(".")[0]}`) : ""),
+  );
+
+  const me = await r.step(
+    "Server",
+    async () => {
+      const [me, channels] = await Promise.all([client.get<Whoami>("/api/v1/whoami"), client.get<{ name: string; branch: string }[]>("/api/v1/channels")]);
+      if (!scopeAllows(me.scope, "publish")) throw new Error(`token ${me.actor} has the ${me.scope} scope; publishing needs publish or admin.`);
+      return { ...me, serving: channels.filter((ch) => ch.branch === options.branch).map((ch) => ch.name) };
+    },
+    (me) =>
+      `${new URL(client.options.server).host} ${c.dim(`· ${me.actor} (${me.scope})`)}` +
+      (me.serving.length ? c.dim(` · ${me.serving.map((name) => `${name} → ${options.branch}`).join(", ")}`) : ""),
+  );
+  if (me.serving.length === 0) {
+    r.warn(`No channel serves ${options.branch}: no device gets this update until \`flare-ota channels set <channel> ${options.branch}\`.`);
   }
+
+  if (full) {
+    const signed = await r.step(
+      "Code signing",
+      async () => {
+        const updates = full.updates ?? {};
+        if (!updates.codeSigningCertificate) return null;
+        const certificate = new X509Certificate(await readFile(join(dir, updates.codeSigningCertificate)));
+        if (!(certificate.keyUsage ?? []).includes(CODE_SIGNING_EKU)) {
+          throw new Error(`${updates.codeSigningCertificate} lacks the codeSigning extended key usage: devices would reject every update.`);
+        }
+        const probe = await probeSignature(client.options.server, updates.requestHeaders?.["expo-channel-name"] ?? "production", certificate);
+        if (!probe.ok) throw new Error(probe.detail);
+        return { path: updates.codeSigningCertificate as string, validTo: new Date(certificate.validTo) };
+      },
+      (signed) => (signed ? `server key matches ${basename(signed.path)} ${c.dim(`· valid to ${signed.validTo.getFullYear()}`)}` : c.dim("app not code-signed")),
+    );
+    if (!signed) r.warn("The app has no codeSigningCertificate: devices accept updates without checking their signature.");
+  }
+
   const outputDir = await mkdtemp(join(tmpdir(), "flare-ota-export-"));
   try {
-    log(`Exporting ${options.platforms.join(" + ")}…`);
-    await tools.exportBundles(options.projectDir, options.platforms, outputDir);
-    const { files, perPlatform } = await readExport(outputDir, options.platforms);
-    const updates: Partial<Record<Platform, PlatformUpdateInput>> = {};
-    for (const platform of options.platforms) {
-      const rv = await tools.runtimeVersion(options.projectDir, platform);
-      log(`${platform}: runtime ${rv}`);
-      updates[platform] = { runtimeVersion: rv, ...perPlatform[platform]! };
-    }
-    // The app icon travels with the publish so the dashboard can show which app this is.
-    const appIcon = await iconFile(options.projectDir, config);
-    if (appIcon && !files.has(appIcon.ref.hash)) files.set(appIcon.ref.hash, appIcon);
-    const { missing } = await client.post<{ missing: string[] }>("/api/v1/assets/missing", { hashes: [...files.keys()] });
-    log(`Uploading ${missing.length} of ${files.size} files…`);
-    await pool(missing, 4, async (hash) => {
-      const file = files.get(hash)!;
-      const bytes = await readFile(file.path);
-      await client.request("PUT", `/api/v1/assets/${hash}`, new Uint8Array(bytes), { "content-type": file.ref.contentType });
-    });
-    return await client.post<GroupSummary>("/api/v1/groups", {
-      branch: options.branch,
-      message: options.message,
-      gitCommit: await tools.gitCommit(options.projectDir),
-      rolloutPercent: options.rolloutPercent,
-      expoConfig: config,
-      ...(appIcon ? { appIcon: appIcon.ref } : {}),
-      updates,
-    });
+    const exported = await r.step(
+      "Export",
+      async (step) => {
+        step.update(`expo export --platform ${options.platforms.join(",")}`);
+        await tools.exportBundles(dir, options.platforms, outputDir);
+        const read = await readExport(outputDir, options.platforms);
+        // The app icon travels with the publish so the dashboard can show which app this is.
+        const appIcon = await iconFile(dir, config);
+        if (appIcon && !read.files.has(appIcon.ref.hash)) read.files.set(appIcon.ref.hash, appIcon);
+        return { ...read, appIcon };
+      },
+      ({ files, perPlatform }) => {
+        const sizes = options.platforms.map((p) => `${p} ${bytes(files.get(perPlatform[p]!.launchAsset.hash)!.size)}`);
+        const assets = new Set(options.platforms.flatMap((p) => perPlatform[p]!.assets.map((a) => a.hash))).size;
+        return `${sizes.join(c.dim(" · "))} ${c.dim(`· ${assets} assets`)}`;
+      },
+    );
+
+    const { updates, devices } = await r.step(
+      "Runtime",
+      async () => {
+        const [versions, overview] = await Promise.all([
+          Promise.all(options.platforms.map((p) => tools.runtimeVersion(dir, p))),
+          client.get<Overview>("/api/v1/overview").catch(() => null),
+        ]);
+        const updates: Partial<Record<Platform, PlatformUpdateInput>> = {};
+        const devices: Partial<Record<Platform, number>> = {};
+        options.platforms.forEach((platform, i) => {
+          updates[platform] = { runtimeVersion: versions[i]!, ...exported.perPlatform[platform]! };
+          if (overview) {
+            devices[platform] = overview.runtimes.filter((rt) => rt.platform === platform && rt.runtimeVersion === versions[i]).reduce((n, rt) => n + rt.devices, 0);
+          }
+        });
+        return { updates, devices };
+      },
+      ({ updates }) => options.platforms.map((p) => `${p} ${c.dim(short(updates[p]!.runtimeVersion))}`).join(c.dim(" · ")),
+    );
+
+    const uploaded = await r.step(
+      "Upload",
+      async (step) => {
+        const { missing } = await client.post<{ missing: string[] }>("/api/v1/assets/missing", { hashes: [...exported.files.keys()] });
+        const total = missing.reduce((n, hash) => n + exported.files.get(hash)!.size, 0);
+        let done = 0;
+        let sent = 0;
+        const show = () => step.update(`${progressBar(sent, total)} ${done}/${missing.length} · ${bytes(sent)} / ${bytes(total)}`);
+        show();
+        await pool(missing, 4, async (hash) => {
+          const file = exported.files.get(hash)!;
+          const body = await readFile(file.path);
+          await client.request("PUT", `/api/v1/assets/${hash}`, new Uint8Array(body), { "content-type": file.ref.contentType });
+          done += 1;
+          sent += file.size;
+          show();
+        });
+        return { files: missing.length, bytes: total, reused: exported.files.size - missing.length };
+      },
+      (u) => (u.files === 0 ? `nothing new ${c.dim(`· ${u.reused} files already on the server`)}` : `${u.files} files, ${bytes(u.bytes)} ${c.dim(`· ${u.reused} already on the server`)}`),
+    );
+
+    const group = await r.step(
+      "Publish",
+      async () =>
+        client.post<GroupSummary>("/api/v1/groups", {
+          branch: options.branch,
+          message: options.message,
+          gitCommit: await tools.gitCommit(dir),
+          rolloutPercent: options.rolloutPercent,
+          expoConfig: config,
+          ...(exported.appIcon ? { appIcon: exported.appIcon.ref } : {}),
+          updates,
+        }),
+      (group) => `group ${short(group.id)} ${c.dim(`on ${group.branch}`)}`,
+    );
+    return { group, dashboardUrl: me.dashboardUrl ? `${me.dashboardUrl}/groups/${group.id}` : null, devices, uploaded };
   } finally {
     await rm(outputDir, { recursive: true, force: true });
   }
@@ -140,9 +254,9 @@ export async function iconFile(projectDir: string, config: Record<string, any>):
     } catch {
       continue;
     }
-    const bytes = await readFile(path);
-    if (bytes.length > 2 * 1024 * 1024) continue;
-    return { ref: refFor(bytes, type, extname(path).toLowerCase()), path };
+    const content = await readFile(path);
+    if (content.length > 2 * 1024 * 1024) continue;
+    return { ref: refFor(content, type, extname(path).toLowerCase()), path, size: content.length };
   }
   return null;
 }

@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 import { LOCAL_TOOLS, isPlatform, type Platform } from "@flare-ota/core";
 import type { Client } from "./api.ts";
 import { publishUpdate } from "./publish.ts";
+import { recorder } from "./ui.ts";
 
 interface RpcMessage {
   jsonrpc: "2.0";
@@ -46,17 +47,22 @@ export async function serveMcp(client: Client): Promise<void> {
         const args = message.params.arguments ?? {};
         const platform = args.platform;
         const platforms: Platform[] = platform && isPlatform(platform) ? [platform] : ["ios", "android"];
+        const steps = recorder();
         try {
-          const group = await publishUpdate(client, {
+          const { group, dashboardUrl } = await publishUpdate(client, {
             projectDir: String(args.projectDir),
             branch: String(args.branch),
             message: String(args.message),
             platforms,
             rolloutPercent: Number(args.rolloutPercent ?? 100),
+            reporter: steps,
           });
-          send({ jsonrpc: "2.0", id: message.id, result: { content: [{ type: "text", text: JSON.stringify(group, null, 2) }] } });
+          const text = `${steps.lines.join("\n")}\n\n${JSON.stringify({ ...group, dashboardUrl }, null, 2)}`;
+          send({ jsonrpc: "2.0", id: message.id, result: { content: [{ type: "text", text }] } });
         } catch (error) {
-          send({ jsonrpc: "2.0", id: message.id, result: { content: [{ type: "text", text: (error as Error).message }], isError: true } });
+          // A failed step already carries the error; anything else (bad arguments) gets it appended.
+          const text = steps.lines.at(-1)?.startsWith("✗") ? steps.lines.join("\n") : [...steps.lines, (error as Error).message].join("\n");
+          send({ jsonrpc: "2.0", id: message.id, result: { content: [{ type: "text", text }], isError: true } });
         }
       } else {
         const result = await remote(message);

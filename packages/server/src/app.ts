@@ -159,7 +159,8 @@ export function createApp() {
 
   api.get("/whoami", (c) => {
     const principal = requireScope(c, "read");
-    return c.json(principal);
+    // Lets the CLI link a fresh release to its dashboard page.
+    return c.json({ ...principal, dashboardUrl: c.env.DASHBOARD_HOST ? `https://${c.env.DASHBOARD_HOST}` : null });
   });
 
   api.post("/assets/missing", async (c) => {

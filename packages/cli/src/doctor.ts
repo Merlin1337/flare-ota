@@ -28,6 +28,25 @@ export function signedPart(contentType: string, body: string): { header: string;
   return null;
 }
 
+export const CODE_SIGNING_EKU = "1.3.6.1.5.5.7.3.3";
+
+/** A signed manifest probe: proves the server's private key matches the certificate baked into the app. */
+export async function probeSignature(server: string, channel: string, certificate: X509Certificate | null): Promise<{ ok: boolean; warn?: boolean; detail: string }> {
+  try {
+    const response = await fetch(`${server}/manifest`, {
+      headers: { "expo-protocol-version": "1", "expo-platform": "ios", "expo-runtime-version": "flare-ota-doctor", "expo-channel-name": channel, "expo-expect-signature": "sig" },
+    });
+    const part = signedPart(response.headers.get("content-type") ?? "", await response.text());
+    const sig = part ? /sig="([^"]+)"/.exec(part.header)?.[1] : undefined;
+    if (!response.ok || !part || !sig) return { ok: false, detail: `manifest probe → HTTP ${response.status}, no signature` };
+    if (!certificate) return { ok: true, warn: true, detail: "server signs responses (no local certificate to verify against)" };
+    const valid = verify("sha256", Buffer.from(part.json), certificate.publicKey, Buffer.from(sig, "base64"));
+    return { ok: valid, detail: valid ? "server signature verified with the app's certificate" : "signature does NOT match the app's certificate: wrong key on the server" };
+  } catch (error) {
+    return { ok: false, detail: (error as Error).message };
+  }
+}
+
 export async function doctor(projectDir: string, client: Client): Promise<Check[]> {
   const checks: Check[] = [];
   const add = (name: string, ok: boolean, detail: string, warn = false) => checks.push({ name, ok, detail, warn });
@@ -62,7 +81,7 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
         add("code signing", meta.keyid === "main" && meta.alg === "rsa-v1_5-sha256", `${updates.codeSigningCertificate}, valid to ${certificate.validTo}; metadata ${JSON.stringify(meta)}`);
         // expo-updates refuses a certificate without the codeSigning extended key usage (1.3.6.1.5.5.7.3.3).
         const usages = certificate.keyUsage ?? [];
-        add("certificate usage", usages.includes("1.3.6.1.5.5.7.3.3"), usages.includes("1.3.6.1.5.5.7.3.3") ? "codeSigning extended key usage present" : "missing the codeSigning extended key usage: devices will reject every update. Regenerate the certificate (setup or expo-updates codesigning:generate).");
+        add("certificate usage", usages.includes(CODE_SIGNING_EKU), usages.includes(CODE_SIGNING_EKU) ? "codeSigning extended key usage present" : "missing the codeSigning extended key usage: devices will reject every update. Regenerate the certificate (setup or expo-updates codesigning:generate).");
       } catch (error) {
         add("code signing", false, `cannot read ${updates.codeSigningCertificate}: ${(error as Error).message}`);
       }
@@ -89,24 +108,8 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
     add("token", false, "FLARE_OTA_TOKEN is not set (needed to publish)", true);
   }
 
-  // A signed probe proves the server's private key matches the certificate baked into the app.
-  try {
-    const channel = config?.updates?.requestHeaders?.["expo-channel-name"] ?? "production";
-    const response = await fetch(`${client.options.server}/manifest`, {
-      headers: { "expo-protocol-version": "1", "expo-platform": "ios", "expo-runtime-version": "flare-ota-doctor", "expo-channel-name": channel, "expo-expect-signature": "sig" },
-    });
-    const part = signedPart(response.headers.get("content-type") ?? "", await response.text());
-    const sig = part ? /sig="([^"]+)"/.exec(part.header)?.[1] : undefined;
-    if (!response.ok || !part || !sig) {
-      add("signed response", false, `manifest probe → HTTP ${response.status}, no signature`);
-    } else if (!certificate) {
-      add("signed response", true, "server signs responses (no local certificate to verify against)", true);
-    } else {
-      const valid = verify("sha256", Buffer.from(part.json), certificate.publicKey, Buffer.from(sig, "base64"));
-      add("signed response", valid, valid ? "server signature verified with the app's certificate" : "signature does NOT match the app's certificate: wrong key on the server");
-    }
-  } catch (error) {
-    add("signed response", false, (error as Error).message);
-  }
+  const channel = config?.updates?.requestHeaders?.["expo-channel-name"] ?? "production";
+  const probe = await probeSignature(client.options.server, channel, certificate);
+  add("signed response", probe.ok, probe.detail, probe.warn);
   return checks;
 }

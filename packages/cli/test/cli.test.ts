@@ -11,6 +11,7 @@ import { signedPart } from "../src/doctor.ts";
 import { init } from "../src/init.ts";
 import { publishUpdate, readExport } from "../src/publish.ts";
 import { terminalQr } from "../src/qr.ts";
+import { recorder } from "../src/ui.ts";
 
 let h: Harness;
 let server: Server;
@@ -62,28 +63,48 @@ describe("readExport", () => {
 });
 
 describe("publish end to end", () => {
-  it("uploads only missing files, publishes, and the server serves a signed manifest", async () => {
+  it("checks, uploads only missing files, publishes, and the server serves a signed manifest", async () => {
     const admin = await h.token("publish", "ci");
     const client = new Client({ server: base, token: admin });
     const tools = {
-      expoConfig: async () => ({ name: "demo", updates: { url: `${base}/manifest` } }),
+      expoConfig: async () => ({ name: "demo", version: "1.2.0", sdkVersion: "58.0.0", updates: { url: `${base}/manifest` } }),
       exportBundles: async (_cwd: string, _platforms: unknown, out: string) => fakeExport(out, "console.log('v1')"),
       runtimeVersion: async () => "rt-1",
       gitCommit: async () => "abcdef1",
     };
-    const logs: string[] = [];
-    const group = await publishUpdate(client, { projectDir: ".", branch: "production", message: "v1", platforms: ["ios"], rolloutPercent: 100, tools, log: (l) => logs.push(l) });
+    const steps = recorder();
+    const { group, uploaded, devices, dashboardUrl } = await publishUpdate(client, { projectDir: ".", branch: "production", message: "v1", platforms: ["ios"], rolloutPercent: 100, tools, reporter: steps });
     expect(group.updates[0]).toMatchObject({ platform: "ios", runtimeVersion: "rt-1" });
-    expect(logs).toContain("Uploading 2 of 2 files…");
-    // Same content again: nothing to upload.
-    const logs2: string[] = [];
-    await expect(publishUpdate(client, { projectDir: ".", branch: "staging", message: "again", platforms: ["ios"], rolloutPercent: 100, tools, log: (l) => logs2.push(l) })).resolves.toBeDefined();
-    expect(logs2).toContain("Uploading 0 of 2 files…");
+    expect(uploaded).toEqual({ files: 2, bytes: "console.log('v1')".length + "png-bytes".length, reused: 0 });
+    expect(devices).toEqual({ ios: 0 });
+    expect(dashboardUrl).toBe(`https://admin.test/groups/${group.id}`);
+    expect(steps.lines.map((l) => l.split(":")[0])).toEqual(["✓ App config", "✓ Server", "✓ Code signing", "! The app has no codeSigningCertificate", "✓ Export", "✓ Runtime", "✓ Upload", "✓ Publish"]);
+    expect(steps.lines[0]).toContain("demo 1.2.0");
+    // Same content again: nothing to upload, and a branch no channel serves is called out.
+    const again = recorder();
+    const second = await publishUpdate(client, { projectDir: ".", branch: "nightly", message: "again", platforms: ["ios"], rolloutPercent: 100, tools, reporter: again });
+    expect(second.uploaded).toMatchObject({ files: 0, reused: 2 });
+    expect(again.lines.some((l) => l.startsWith("! No channel serves nightly"))).toBe(true);
 
     const response = await fetch(`${base}/manifest`, { headers: manifestHeaders() });
     const parts = await parseMultipart(response);
     expect(await verifySignature(h.publicKey, parts.manifest!.headers["expo-signature"]!, parts.manifest!.body)).toBe(true);
     expect(JSON.parse(parts.manifest!.body).id).toBe(group.updates[0]!.id);
+  });
+
+  it("stops before exporting when the token cannot publish", async () => {
+    const client = new Client({ server: base, token: await h.token("read", "viewer") });
+    let exported = false;
+    const tools = {
+      expoConfig: async () => ({ updates: { url: `${base}/manifest` } }),
+      exportBundles: async () => {
+        exported = true;
+      },
+    };
+    const steps = recorder();
+    await expect(publishUpdate(client, { projectDir: ".", branch: "production", message: "x", platforms: ["ios"], rolloutPercent: 100, tools, reporter: steps })).rejects.toThrow(/read scope/);
+    expect(exported).toBe(false);
+    expect(steps.lines.at(-1)).toMatch(/^✗ Server/);
   });
 
   it("sends the app icon so the dashboard can show the app", async () => {

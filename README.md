@@ -118,6 +118,14 @@ npx flare-ota rollout <groupId> 100      # all devices
 npx flare-ota rollback --branch production   # changed your mind
 ```
 
+`publish` checks before it builds anything: app config, token scope, which channel serves the branch,
+and that the server's signing key matches the certificate in your app. Then it shows each step, uploads
+only what the server doesn't have, and ends with the reach, the dashboard link and what to run next.
+
+<p align="center">
+  <img src="docs/assets/cli.png" alt="flare-ota publish: checks, export, upload and a summary with the dashboard link and next commands" width="100%">
+</p>
+
 Full walkthrough in [docs/quick-start.md](docs/quick-start.md).
 
 ## Talk to it from your AI agent

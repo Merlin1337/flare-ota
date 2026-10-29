@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { isPlatform, type GroupSummary, type Platform, type UpdateMetrics } from "@flare-ota/core";
+import { isPlatform, PLATFORMS, type GroupSummary, type Platform, type UpdateMetrics } from "@flare-ota/core";
 import { Client, resolveClientOptions } from "./api.ts";
 import { doctor } from "./doctor.ts";
 import { init } from "./init.ts";
 import { serveMcp } from "./mcp.ts";
-import { publishUpdate } from "./publish.ts";
+import { publishUpdate, type PublishResult } from "./publish.ts";
 import { terminalQr } from "./qr.ts";
+import { c, ReportedError, short, terminal } from "./ui.ts";
 
 const HELP = `flare-ota — self-hosted OTA updates for Expo on Cloudflare
 
@@ -17,7 +18,7 @@ App setup
   doctor                                                          Check app config, server, token and signing
 
 Releases
-  publish --branch <b> --message <m> [--platform ios|android] [--rollout <1-100>]
+  publish --branch <b> --message <m> [--platform ios|android] [--rollout <1-100>] [--skip-checks]
   groups [--branch <b>] [--limit n]                               List published update groups
   rollout <groupId> <percent>                                     Raise a rollout (it only goes up)
   pause <groupId> | resume <groupId>                              Stop / resume offering a group
@@ -56,15 +57,13 @@ const { values: flags, positionals } = parseArgs({
     token: { type: "string" },
     json: { type: "boolean" },
     force: { type: "boolean" },
+    "skip-checks": { type: "boolean" },
     help: { type: "boolean", short: "h" },
   },
 });
 
 const json = Boolean(flags.json);
 const projectDir = flags.project ?? process.cwd();
-const log = (line: string) => {
-  if (!json) process.stderr.write(`${line}\n`);
-};
 const out = (data: unknown, text: () => string) => {
   process.stdout.write(json ? `${JSON.stringify(data, null, 2)}\n` : `${text()}\n`);
 };
@@ -94,6 +93,36 @@ const describeGroup = (g: GroupSummary) =>
   `${g.id}  ${g.branch}  ${g.createdAt.slice(0, 16).replace("T", " ")}  ${g.kind === "rollback-embedded" ? "[rollback to embedded] " : ""}${g.message}\n` +
   g.updates.map((u) => `    ${u.platform.padEnd(8)} runtime ${u.runtimeVersion}  rollout ${u.paused ? "paused" : `${u.rolloutPercent}%`}  ${u.id}`).join("\n");
 
+/** The closing card of `publish`: what went out, where it lands, and what to do next. */
+function published({ group, devices, dashboardUrl }: PublishResult, secs: number) {
+  const row = (label: string, value: string) => `    ${c.dim(label.padEnd(11))}${value}`;
+  const reach = (n: number | undefined) =>
+    n === undefined ? "" : n === 0 ? c.dim(" · no device seen on this runtime yet") : c.dim(` · ${n.toLocaleString("en-US")} device${n > 1 ? "s" : ""} on this runtime`);
+  const rollout = group.updates[0]?.rolloutPercent ?? 100;
+  const next: [string, string][] = [
+    [`flare-ota preview ${group.id}`, "QR code to try it on one phone"],
+    ...(rollout < 100 ? ([[`flare-ota rollout ${group.id} ${Math.min(100, rollout * 5)}`, "reach more devices"]] as [string, string][]) : []),
+    [`flare-ota rollback --branch ${group.branch}`, "undo it for everyone"],
+  ];
+  const width = Math.max(...next.map(([cmd]) => cmd.length)) + 3;
+  return [
+    "",
+    `  ${c.green("●")} ${c.bold(`Live on ${group.branch}`)} ${c.dim(`in ${secs.toFixed(1)}s`)}`,
+    "",
+    row("Message", group.message),
+    row("Group", group.id),
+    ...[...group.updates]
+      .sort((a, b) => PLATFORMS.indexOf(a.platform) - PLATFORMS.indexOf(b.platform))
+      .map((u) => row(u.platform, `runtime ${short(u.runtimeVersion)}${reach(devices[u.platform])}`)),
+    row("Rollout", rollout === 100 ? "100%" : `${rollout}% ${c.dim("of eligible devices")}`),
+    ...(dashboardUrl ? [row("Dashboard", c.flame(dashboardUrl))] : []),
+    "",
+    `  ${c.dim("Next")}`,
+    ...next.map(([cmd, what]) => `    ${cmd.padEnd(width)}${c.dim(what)}`),
+    "",
+  ].join("\n");
+}
+
 async function main() {
   const [command, ...args] = positionals;
   if (!command || flags.help) {
@@ -111,21 +140,29 @@ async function main() {
     }
     case "doctor": {
       const checks = await doctor(projectDir, client());
-      out(checks, () => checks.map((c) => `${c.ok ? "✓" : c.warn ? "!" : "✗"} ${c.name}: ${c.detail}`).join("\n"));
-      if (checks.some((c) => !c.ok && !c.warn)) process.exitCode = 1;
+      const mark = (check: (typeof checks)[number]) => (check.ok ? c.green("✓") : check.warn ? c.yellow("!") : c.red("✗"));
+      out(checks, () => checks.map((check) => `  ${mark(check)} ${check.name.padEnd(22)}${check.ok ? check.detail : check.warn ? c.yellow(check.detail) : c.red(check.detail)}`).join("\n"));
+      if (checks.some((check) => !check.ok && !check.warn)) process.exitCode = 1;
       return;
     }
     case "publish": {
-      const group = await publishUpdate(client(), {
+      const branch = need(flags.branch, "--branch");
+      const rolloutPercent = percent(flags.rollout, 100);
+      const ui = terminal();
+      const started = performance.now();
+      const targets = platforms();
+      if (!json) ui.line(`\n  ${c.bold(c.flame("flare-ota"))} ${c.dim("publish")}  ${branch} ${c.dim(`· ${targets.join(" + ")} · ${rolloutPercent}% rollout`)}\n`);
+      const result = await publishUpdate(client(), {
         projectDir,
-        branch: need(flags.branch, "--branch"),
+        branch,
         message: need(flags.message, "--message"),
-        platforms: platforms(),
-        rolloutPercent: percent(flags.rollout, 100),
+        platforms: targets,
+        rolloutPercent,
         force: Boolean(flags.force),
-        log,
+        checks: !flags["skip-checks"],
+        ...(json ? {} : { reporter: ui }),
       });
-      out(group, () => `Published\n${describeGroup(group)}`);
+      out(result, () => published(result, (performance.now() - started) / 1000));
       return;
     }
     case "groups": {
@@ -226,6 +263,7 @@ async function main() {
 
 main().catch((error: Error) => {
   if (json) process.stdout.write(`${JSON.stringify({ error: error.message })}\n`);
+  else if (error instanceof ReportedError) process.stderr.write("\n");
   else process.stderr.write(`flare-ota: ${error.message}\n`);
   process.exitCode = 1;
 });

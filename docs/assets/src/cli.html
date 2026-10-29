@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;box-sizing:border-box}
+body{width:1280px;height:780px;background:#0b0a09;display:grid;place-items:center;font-family:"SF Mono",Menlo,ui-monospace,monospace;position:relative;overflow:hidden}
+body::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 380px at 85% 0%,rgba(249,115,22,.16),transparent 70%)}
+.win{position:relative;width:1120px;border-radius:14px;background:#141210;border:1px solid rgba(255,255,255,.09);box-shadow:0 40px 90px -30px rgba(0,0,0,.9)}
+.bar{height:40px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.bar i{width:12px;height:12px;border-radius:50%;background:#3a3532}
+.bar span{margin-left:auto;margin-right:auto;font:500 12.5px -apple-system,system-ui,sans-serif;color:#7d766f;transform:translateX(-30px)}
+pre{padding:22px 26px 26px;font-size:15px;line-height:1.62;color:#ebe6e0;white-space:pre}
+.f{color:#f97316}.g{color:#34d399}.y{color:#fbbf24}.d{color:#7d766f}.b{font-weight:700}.p{color:#a8a19a}
+</style></head><body><div class="win"><div class="bar"><i></i><i></i><i></i><span>~/acme-pay</span></div>
+<pre><span class="p">$</span> npx flare-ota publish --branch production -m "Fix checkout crash" --rollout 10
+
+  <span class="b f">flare-ota</span> <span class="d">publish</span>  production <span class="d">· ios + android · 10% rollout</span>
+
+  <span class="g">✓</span> App config    Acme Pay 2.4.0<span class="d"> · SDK 58</span>  <span class="d">0.9s</span>
+  <span class="g">✓</span> Server        ota.example.com <span class="d">· token:github-actions (publish) · production → production</span>  <span class="d">142ms</span>
+  <span class="g">✓</span> Code signing  server key matches certificate.pem <span class="d">· valid to 2036</span>  <span class="d">188ms</span>
+  <span class="g">✓</span> Export        ios 2.4 MB<span class="d"> · </span>android 2.6 MB <span class="d">· 59 assets</span>  <span class="d">11.2s</span>
+  <span class="g">✓</span> Runtime       ios <span class="d">eff1a310</span><span class="d"> · </span>android <span class="d">51cb92e6</span>  <span class="d">1.4s</span>
+  <span class="g">✓</span> Upload        3 files, 5.1 MB <span class="d">· 69 already on the server</span>  <span class="d">2.3s</span>
+  <span class="g">✓</span> Publish       group 42d7966a <span class="d">on production</span>  <span class="d">96ms</span>
+
+  <span class="g">●</span> <span class="b">Live on production</span> <span class="d">in 17.3s</span>
+
+    <span class="d">Message    </span>Fix checkout crash
+    <span class="d">Group      </span>42d7966a-9ffe-4424-9fd0-5070d199d72a
+    <span class="d">ios        </span>runtime eff1a310<span class="d"> · 1,948 devices on this runtime</span>
+    <span class="d">android    </span>runtime 51cb92e6<span class="d"> · 678 devices on this runtime</span>
+    <span class="d">Rollout    </span>10% <span class="d">of eligible devices</span>
+    <span class="d">Dashboard  </span><span class="f">https://ota-admin.example.com/groups/42d7966a-9ffe-4424-9fd0-5070d199d72a</span>
+
+  <span class="d">Next</span>
+    flare-ota preview 42d7966a-9ffe-4424-9fd0-5070d199d72a      <span class="d">QR code to try it on one phone</span>
+    flare-ota rollout 42d7966a-9ffe-4424-9fd0-5070d199d72a 50   <span class="d">reach more devices</span>
+    flare-ota rollback --branch production                      <span class="d">undo it for everyone</span></pre></div></body></html>

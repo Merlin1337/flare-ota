@@ -4,28 +4,16 @@
     "slug": "flare-ota-example",
     "scheme": "flareotaexample",
     "version": "1.0.0",
-    "ios": {
-      "bundleIdentifier": "dev.flareota.example"
-    },
-    "android": {
-      "package": "dev.flareota.example"
-    },
-    "runtimeVersion": {
-      "policy": "fingerprint"
-    },
+    "ios": { "bundleIdentifier": "dev.flareota.example" },
+    "android": { "package": "dev.flareota.example" },
+    "runtimeVersion": { "policy": "fingerprint" },
     "updates": {
       "enabled": true,
-      "url": "https://ota.merlin.ac/manifest",
+      "url": "https://ota.example.com/manifest",
       "checkAutomatically": "ON_LOAD",
       "codeSigningCertificate": "./certs/certificate.pem",
-      "codeSigningMetadata": {
-        "keyid": "main",
-        "alg": "rsa-v1_5-sha256"
-      },
-      "requestHeaders": {
-        "expo-channel-name": "production",
-        "flare-preview": ""
-      }
+      "codeSigningMetadata": { "keyid": "main", "alg": "rsa-v1_5-sha256" },
+      "requestHeaders": { "expo-channel-name": "production", "flare-preview": "" }
     }
   }
 }

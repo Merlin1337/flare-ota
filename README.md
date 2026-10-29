@@ -26,8 +26,11 @@ Cloudflare account in a few commands.
    └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-> Status: **beta**. The protocol, rollout, rollback, preview and security paths are covered by
-> tests; the configuration format of Cloudflare's `cf` CLI is itself in open beta.
+> Status: **beta**. Validated end to end on an iOS release build (Expo SDK 58) against a real
+> deployment: signed publish → update, rollback to the previous bundle, rollback to the embedded
+> bundle, and a preview link pinning one device to a paused 1% canary. Not yet exercised on a
+> device: Android and `exitPreview()`. The configuration format of Cloudflare's `cf` CLI is itself
+> in open beta.
 
 ## Quick start
 

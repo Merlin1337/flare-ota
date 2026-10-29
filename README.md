@@ -65,7 +65,7 @@ Worker verifies itself, an audit log, and WAF rules.
 
 ## Features
 
-| | |
+| Capability | What you get |
 |---|---|
 | **Expo Updates protocol v1** | Works with `expo-updates` as shipped. Code signing required, fingerprint runtime versions. |
 | **Channels & branches** | Point `production` and `staging` at any branch; promote a tested release in one call. |
@@ -111,9 +111,10 @@ Then build a release binary once: the update URL and certificate are native sett
 
 ```sh
 export FLARE_OTA_URL=https://ota.example.com FLARE_OTA_TOKEN=fota_…
-npx flare-ota doctor                                    # config, server, token, signature
+npx flare-ota doctor                     # config, server, token, signature
 npx flare-ota publish --branch production -m "Fix checkout" --rollout 10
-npx flare-ota rollout <groupId> 100                     # or: npx flare-ota rollback --branch production
+npx flare-ota rollout <groupId> 100      # all devices
+npx flare-ota rollback --branch production   # changed your mind
 ```
 
 Full walkthrough in [docs/quick-start.md](docs/quick-start.md).
@@ -146,7 +147,7 @@ the update path in their own account, open code, and costs that track Cloudflare
 
 ## Documentation
 
-| | |
+| Guide | Covers |
 |---|---|
 | [Quick start](docs/quick-start.md) | Deploy the server, connect an app, publish, roll back |
 | [Expo app integration](docs/expo-app.md) | app.json, certificates, staging builds, preview links, gotchas |

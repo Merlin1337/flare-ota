@@ -13,6 +13,6 @@ else
 fi
 shot --window-size=1280,400 --screenshot=banner.png "file://$PWD/src/banner.html"
 shot --window-size=1280,780 --screenshot=hero.png "file://$PWD/src/hero.html"
-shot --window-size=1280,600 --screenshot=architecture-light.png "file://$PWD/src/architecture.html"
-shot --window-size=1280,600 --screenshot=architecture-dark.png "file://$PWD/src/architecture.html#dark"
+shot --window-size=1280,520 --screenshot=architecture-light.png "file://$PWD/src/architecture.html"
+shot --window-size=1280,520 --screenshot=architecture-dark.png "file://$PWD/src/architecture.html#dark"
 ls -la *.png

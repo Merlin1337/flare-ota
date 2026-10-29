@@ -2,28 +2,28 @@
 *{margin:0;box-sizing:border-box}
 :root{--bg:#ffffff;--fg:#1c1917;--muted:#78716c;--line:#e7e2dc;--box:#faf8f5;--cf:#fff7ef;--cfline:#fbd5b5;--accent:#f97316;--worker:#ffffff}
 body.dark{--bg:#0d1117;--fg:#f0ebe5;--muted:#9a938c;--line:#2d2925;--box:#16130f;--cf:#1a120b;--cfline:#5a3416;--accent:#fb923c;--worker:#120f0c}
-body{width:1280px;height:600px;background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,system-ui,sans-serif;position:relative;overflow:hidden}
+body{width:1280px;height:520px;background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,system-ui,sans-serif;position:relative;overflow:hidden}
 .box{position:absolute;border:1px solid var(--line);background:var(--box);border-radius:14px;padding:14px 16px}
 .box b{display:block;font-size:15px;letter-spacing:-.01em}.box small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.4}
 .client{left:40px;width:230px;height:84px}
-.cf{position:absolute;left:318px;top:40px;width:650px;height:520px;border:1.5px dashed var(--cfline);background:var(--cf);border-radius:20px}
+.cf{position:absolute;left:318px;top:40px;width:650px;height:440px;border:1.5px dashed var(--cfline);background:var(--cf);border-radius:20px}
 .cf>.label{position:absolute;top:-12px;left:22px;background:var(--bg);padding:0 10px;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.02em}
-.edge{left:345px;top:76px;width:128px;height:456px;display:flex;flex-direction:column;justify-content:center;gap:10px;text-align:center}
+.edge{left:345px;top:76px;width:128px;height:376px;display:flex;flex-direction:column;justify-content:center;gap:10px;text-align:center}
 .edge b{margin-bottom:4px}.edge span{font-size:12px;font-weight:600;padding:5px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
-.worker{left:505px;top:76px;width:436px;height:372px;background:var(--worker);border-color:var(--accent);border-width:1.5px}
+.worker{left:505px;top:76px;width:436px;height:292px;background:var(--worker);border-color:var(--accent);border-width:1.5px}
 .route{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
 .route:first-of-type{border-top:0;margin-top:10px}
 .route code{font:600 13px "SF Mono",ui-monospace,Menlo,monospace;color:var(--accent)}.route span{color:var(--muted);font-size:12.5px}
-.cron{left:505px;top:468px;width:436px;height:64px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
-.store{left:1010px;width:230px;height:110px}
+.cron{left:505px;top:384px;width:436px;height:68px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
+.store{left:1010px;width:230px;height:104px}
 svg{position:absolute;inset:0;pointer-events:none}
 .t{font-size:11.5px;fill:var(--muted);font-family:Inter,-apple-system,system-ui,sans-serif}
 </style></head><body>
 <script>if (location.hash === "#dark") document.body.classList.add("dark")</script>
-<div class="box client" style="top:60px"><b>Apps in the wild</b><small>standard expo-updates client<br>iOS · Android</small></div>
-<div class="box client" style="top:190px"><b>CLI &amp; CI</b><small>publish, rollout, rollback<br>publish-scoped token</small></div>
-<div class="box client" style="top:320px"><b>AI agents</b><small>MCP: Claude, Cursor…<br>read or admin token</small></div>
-<div class="box client" style="top:450px"><b>Your team</b><small>dashboard in the browser<br>signed in with Cloudflare Access</small></div>
+<div class="box client" style="top:70px"><b>Apps in the wild</b><small>standard expo-updates client<br>iOS · Android</small></div>
+<div class="box client" style="top:170px"><b>CLI &amp; CI</b><small>publish, rollout, rollback<br>publish-scoped token</small></div>
+<div class="box client" style="top:270px"><b>AI agents</b><small>MCP: Claude, Cursor…<br>read or admin token</small></div>
+<div class="box client" style="top:370px"><b>Your team</b><small>dashboard in the browser<br>signed in with Cloudflare Access</small></div>
 
 <div class="cf"><span class="label">YOUR CLOUDFLARE ACCOUNT</span></div>
 <div class="box edge"><b>Edge</b><span>WAF rules</span><span>rate limit</span><span>Access</span><span>edge cache</span></div>
@@ -35,16 +35,16 @@ svg{position:absolute;inset:0;pointer-events:none}
 <div class="route"><code>dashboard</code><span>Access JWT verified in the Worker</span></div></div>
 <div class="box cron">Daily cron: garbage-collects old bundles, stale devices and expired previews</div>
 
-<div class="box store" style="top:90px"><b>D1</b><small>releases, rollouts, channels,<br>devices, tokens, audit log</small></div>
-<div class="box store" style="top:245px"><b>R2</b><small>bundles and assets,<br>verified by SHA-256 on upload</small></div>
-<div class="box store" style="top:400px"><b>Analytics Engine</b><small>optional raw delivery events</small></div>
+<div class="box store" style="top:80px"><b>D1</b><small>releases, rollouts, channels,<br>devices, tokens, audit log</small></div>
+<div class="box store" style="top:205px"><b>R2</b><small>bundles and assets,<br>verified by SHA-256 on upload</small></div>
+<div class="box store" style="top:330px"><b>Analytics Engine</b><small>optional raw delivery events</small></div>
 
-<svg viewBox="0 0 1280 600"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+<svg viewBox="0 0 1280 520"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
 <g stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#a)">
-<path d="M272 102 L343 102"/><path d="M272 232 L343 232"/><path d="M272 362 L343 362"/><path d="M272 492 L343 492"/>
-<path d="M475 262 L503 262"/>
-<path d="M943 180 C 975 180, 975 145, 1008 145"/>
-<path d="M943 262 C 975 262, 975 300, 1008 300"/>
-<path d="M943 340 C 975 340, 975 455, 1008 455"/>
+<path d="M272 112 L343 112"/><path d="M272 212 L343 212"/><path d="M272 312 L343 312"/><path d="M272 412 L343 412"/>
+<path d="M475 222 L503 222"/>
+<path d="M943 150 C 975 150, 975 135, 1008 135"/>
+<path d="M943 222 C 975 222, 975 260, 1008 260"/>
+<path d="M943 300 C 975 300, 975 385, 1008 385"/>
 </g></svg>
 </body></html>

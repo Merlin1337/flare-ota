@@ -17,7 +17,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { env, keychainRead, keychainService, keychainWrite, stageArgs, step, upsertEnvFile, workerName, SERVER_DIR } from "./lib.ts";
+import { cfJson, env, keychainRead, keychainService, keychainWrite, stageArgs, step, upsertEnvFile, workerName, SERVER_DIR } from "./lib.ts";
 
 const parsed = stageArgs();
 const { stage } = parsed;
@@ -60,7 +60,26 @@ function run(script: string, extra: string[] = []) {
 
 console.log(`flare-ota setup for ${workerName(stage)}, stage "${stage}" (settings in ${envFile})\n`);
 step("Settings");
-await ask("CLOUDFLARE_ACCOUNT_ID", "Cloudflare account ID (cf accounts list)");
+// The account comes from the Cloudflare login (OAuth): one account is picked automatically,
+// several are offered as a numbered list. Nobody copies an ID or an API key by hand.
+if (!env("CLOUDFLARE_ACCOUNT_ID")) {
+  let accounts: { id: string; name: string }[] = [];
+  try {
+    accounts = await cfJson<{ id: string; name: string }[]>(["accounts", "list"]);
+  } catch {
+    throw new Error("Not logged in to Cloudflare: run `npx cf auth login` (it opens your browser), then rerun setup.");
+  }
+  if (accounts.length === 0) throw new Error("This Cloudflare login has no account.");
+  let account = accounts[0]!;
+  if (accounts.length > 1) {
+    accounts.forEach((a, i) => console.log(`  ${i + 1}. ${a.name}  ${a.id}`));
+    const choice = Number(((await prompt(`Which account hosts the server? [1-${accounts.length}]: `)) ?? "").trim());
+    if (!Number.isInteger(choice) || choice < 1 || choice > accounts.length) throw new Error("Pick an account by its number.");
+    account = accounts[choice - 1]!;
+  }
+  process.env.CLOUDFLARE_ACCOUNT_ID = account.id;
+  console.log(`Cloudflare account: ${account.name}`);
+}
 const updatesHost = await ask("FLARE_OTA_UPDATES_HOST", "Updates hostname, on a zone of this account", stage === "production" ? "ota.example.com" : `ota-${stage}.example.com`);
 const dashboardHost = await ask("FLARE_OTA_DASHBOARD_HOST", "Dashboard hostname (behind Cloudflare Access)", updatesHost.replace(/^([^.]+)/, "$1-admin"));
 await ask("FLARE_OTA_ACCESS_EMAILS", "Emails allowed on the dashboard (comma-separated)");

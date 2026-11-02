@@ -23,8 +23,9 @@ installs it with pnpm, opens the Cloudflare login if needed, then runs the guide
 clone of this repo, `pnpm install && npx cf auth login && pnpm server:setup --stage production` is
 the same thing. Later deploys run from that folder: `pnpm server:deploy --stage production`.
 
-`setup` asks for your account ID, two hostnames (updates and dashboard), the emails allowed on the
-dashboard and your app's URL scheme, then:
+Cloudflare login is OAuth in your browser: no API key to create or paste. `setup` picks your
+account from that login (a numbered list if you have several), asks for two hostnames (updates and
+dashboard), the emails allowed on the dashboard and your app's URL scheme, then:
 
 1. generates the code-signing key **in memory** and the certificate your app embeds
    (macOS: the key goes to the login keychain; Linux: a 0600 file you move to your password manager);
@@ -41,6 +42,11 @@ Everything it does is a script you can rerun on its own (`packages/server/script
 **One server per app.** For a second app, pass `--app <name>` to `setup` and to every script
 (`pnpm server:deploy --stage production --app myapp`): it gets its own Worker, database, bucket,
 settings file (`.env.<name>.<stage>`), certificate folder (`~/.flare-ota/<name>/`) and keychain entries.
+
+**Without prompts** (CI, or an agent preparing the run): every answer can come from the
+environment instead: `CLOUDFLARE_ACCOUNT_ID`, `FLARE_OTA_UPDATES_HOST`, `FLARE_OTA_DASHBOARD_HOST`,
+`FLARE_OTA_ACCESS_EMAILS`, `FLARE_OTA_APP_SCHEME`. With stdin closed, setup accepts the defaults and
+stops on anything it still needs.
 
 **Using an AI agent?** Setup creates DNS records, an Access application and WAF rules on your zone.
 Agents that guard infrastructure changes (Claude Code's auto mode, for one) will refuse it: run

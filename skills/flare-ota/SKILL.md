@@ -33,6 +33,12 @@ and pick a team name") and wait.
 npx flare-ota setup --stage production [--app <name>]   # fetches the server into ~/.flare-ota/server, installs, logs in, guides
 ```
 
+Cloudflare login is OAuth in the browser (`cf auth login`, opened by setup when needed): never ask
+the user for an API key or account ID; setup reads the account from the login. To prefill answers,
+pass `FLARE_OTA_UPDATES_HOST`, `FLARE_OTA_DASHBOARD_HOST`, `FLARE_OTA_ACCESS_EMAILS`,
+`FLARE_OTA_APP_SCHEME` (and `CLOUDFLARE_ACCOUNT_ID` if they have several accounts) as environment
+variables in the command you hand over.
+
 **Hand setup to the user.** It creates DNS records, an Access application and WAF rules on their
 zone; agent permission systems often block that, and it is theirs to approve anyway. Give them the
 exact command to run themselves (in Claude Code, prefixed with `!`), then continue from its output.

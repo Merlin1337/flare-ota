@@ -54,7 +54,7 @@ export async function upgrade(options: SetupOptions): Promise<void> {
 
   const before = await serverVersion(host);
   if (before && compareVersions(before, FLARE_OTA_VERSION) > 0) {
-    throw new Error(`The server runs ${before}, newer than this CLI (${FLARE_OTA_VERSION}). Update the CLI instead: npm i -D flare-ota@latest.`);
+    throw new Error(`The server runs ${before}, newer than this CLI (${FLARE_OTA_VERSION}). Update the CLI instead: npm i flare-ota@latest.`);
   }
   const forward = ["--stage", options.stage, ...(options.app ? ["--app", options.app] : [])];
   await r.step(

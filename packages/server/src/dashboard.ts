@@ -362,7 +362,7 @@ function onboarding(state: { token: boolean; device: boolean; published: boolean
   const url = `https://${updatesHost || "<your-updates-host>"}`;
   const steps = [
     { done: state.token, title: "Create a publish token", text: "For your laptop and CI. flare-ota only stores its hash.", body: `<a class="btn" href="/tokens?new=1">${ICON.tokens}Create token</a>` },
-    { done: state.device, title: "Connect your Expo app", text: "Copy <code>certificate.pem</code> printed by setup into <code>certs/</code>, then:", body: codeBox(`npx expo install expo-updates\nnpm i -D flare-ota\nFLARE_OTA_URL=${url} npx flare-ota init`) },
+    { done: state.device, title: "Connect your Expo app", text: "Copy <code>certificate.pem</code> printed by setup into <code>certs/</code>, then:", body: codeBox(`npx expo install expo-updates\nnpm i flare-ota\nFLARE_OTA_URL=${url} npx flare-ota init`) },
     { done: state.device, title: "Build a release binary", text: "The update URL and certificate live in the binary. Ticks itself when a device checks in.", body: codeBox("npx expo run:ios --configuration Release", `<span class="c"># or EAS Build, Xcode, CI…</span>\nnpx expo run:ios --configuration Release`) },
     { done: state.published, title: "Publish your first update", text: "Change some JavaScript, then ship it. Devices get it on their next launches.", body: codeBox(`npx flare-ota publish --branch production -m "First OTA"`, `<span class="c"># with FLARE_OTA_TOKEN set</span>\nnpx flare-ota publish \\\n  --branch production -m "First OTA"`) },
   ];

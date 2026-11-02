@@ -94,6 +94,7 @@ which keeps expo-updates' anti-bricking protections enabled (unlike changing the
 import { handlePreviewUrl, isPreviewUrl } from "flare-ota/expo";
 
 export function redirectSystemPath({ path }: { path: string; initial: boolean }) {
+  // `path` may come with or without the scheme: both helpers accept either.
   if (isPreviewUrl(path)) {
     // Downloads the previewed update and reloads into it.
     handlePreviewUrl(path).catch((error) => console.warn("preview", error));

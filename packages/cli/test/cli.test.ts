@@ -264,6 +264,9 @@ describe("init and preview helpers", () => {
     vi.doMock("expo-updates", () => ({}));
     const { isPreviewUrl } = await import("../src/expo-client.ts");
     expect(isPreviewUrl("myapp://flare-ota/preview?token=abc")).toBe(true);
+    expect(isPreviewUrl("flare-ota/preview?token=abc")).toBe(true);
+    expect(isPreviewUrl("/flare-ota/preview?token=abc")).toBe(true);
+    expect(isPreviewUrl("/settings?token=abc")).toBe(false);
     expect(isPreviewUrl("myapp://flare-ota/preview")).toBe(false);
     expect(isPreviewUrl("myapp://settings")).toBe(false);
     expect(isPreviewUrl(null)).toBe(false);

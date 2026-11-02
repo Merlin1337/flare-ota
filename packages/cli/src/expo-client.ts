@@ -13,7 +13,9 @@ const HEADER = "flare-preview";
 
 function previewToken(url: string): string | null {
   try {
-    const parsed = new URL(url);
+    // expo-router may hand over the link with or without its scheme
+    // ("myapp://flare-ota/preview?…", "flare-ota/preview?…", "/flare-ota/preview?…").
+    const parsed = new URL(url.includes("://") ? url : `app://${url.replace(/^\/+/, "")}`);
     if (parsed.hostname !== "flare-ota" || parsed.pathname !== "/preview") return null;
     return parsed.searchParams.get("token");
   } catch {

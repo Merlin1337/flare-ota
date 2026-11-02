@@ -30,9 +30,7 @@ Prerequisites: a Cloudflare account with a zone, Zero Trust and R2 enabled once 
 and pick a team name") and wait.
 
 ```sh
-git clone https://github.com/Merlin1337/flare-ota && cd flare-ota && pnpm install
-npx cf auth login            # interactive: the user completes it in the browser
-pnpm server:setup --stage production [--app <name>]
+npx flare-ota setup --stage production [--app <name>]   # fetches the server into ~/.flare-ota/server, installs, logs in, guides
 ```
 
 **Hand setup to the user.** It creates DNS records, an Access application and WAF rules on their

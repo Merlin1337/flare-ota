@@ -5,6 +5,7 @@ import { Client, resolveClientOptions } from "./api.ts";
 import { doctor } from "./doctor.ts";
 import { init } from "./init.ts";
 import { serveMcp } from "./mcp.ts";
+import { setup } from "./setup.ts";
 import { publishUpdate, type PublishResult } from "./publish.ts";
 import { terminalQr } from "./qr.ts";
 import { c, ReportedError, short, terminal } from "./ui.ts";
@@ -12,6 +13,10 @@ import { c, ReportedError, short, terminal } from "./ui.ts";
 const HELP = `flare-ota — self-hosted OTA updates for Expo on Cloudflare
 
 Usage: flare-ota <command> [options]
+
+Server
+  setup [--stage production] [--app <name>] [--dir <path>] [--ref <git ref>]
+                                                                  Fetch, install and deploy your server (guided)
 
 App setup
   init [--channel production] [--cert ./certs/certificate.pem]   Configure app.json for this server
@@ -60,6 +65,10 @@ const { values: flags, positionals } = parseArgs({
     "skip-checks": { type: "boolean" },
     "allow-local": { type: "boolean" },
     profile: { type: "string" },
+    stage: { type: "string" },
+    app: { type: "string" },
+    dir: { type: "string" },
+    ref: { type: "string" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -134,6 +143,10 @@ async function main() {
   if (flags.token) process.stderr.write("Warning: --token is visible in the process list; prefer FLARE_OTA_TOKEN.\n");
 
   switch (command) {
+    case "setup": {
+      setup({ stage: flags.stage ?? "production", ...(flags.app ? { app: flags.app } : {}), ...(flags.dir ? { dir: flags.dir } : {}), ...(flags.ref ? { ref: flags.ref } : {}) });
+      return;
+    }
     case "init": {
       const server = resolveClientOptions({ server: flags.server, token: flags.token }).server;
       const notes = await init({ projectDir, server, channel: flags.channel ?? "production", certificate: flags.cert ?? "./certs/certificate.pem" });

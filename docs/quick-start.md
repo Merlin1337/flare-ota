@@ -15,11 +15,13 @@ From zero to an update on a device. Budget 20 minutes, plus one native build.
 ## 1. Deploy the server
 
 ```sh
-git clone https://github.com/Merlin1337/flare-ota && cd flare-ota
-pnpm install
-npx cf auth login
-pnpm server:setup --stage production
+npx flare-ota setup --stage production
 ```
+
+This fetches the server source at the CLI's version into `~/.flare-ota/server` (`--dir` to choose),
+installs it with pnpm, opens the Cloudflare login if needed, then runs the guided setup. From a
+clone of this repo, `pnpm install && npx cf auth login && pnpm server:setup --stage production` is
+the same thing. Later deploys run from that folder: `pnpm server:deploy --stage production`.
 
 `setup` asks for your account ID, two hostnames (updates and dashboard), the emails allowed on the
 dashboard and your app's URL scheme, then:

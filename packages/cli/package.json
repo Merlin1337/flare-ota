@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "flare-ota": "./dist/cli.js"
+    "flare-ota": "dist/cli.js"
   },
   "exports": {
     "./expo": {

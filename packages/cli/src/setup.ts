@@ -77,14 +77,26 @@ export async function setup(options: SetupOptions): Promise<void> {
   await r.step(
     "Source",
     async (step) => {
-      if (existsSync(join(dir, "packages", "server", "cloudflare.config.ts"))) return "existing";
+      if (existsSync(join(dir, "packages", "server", "cloudflare.config.ts"))) {
+        // Keep an existing checkout at this CLI's version: the server setup must match it.
+        // Settings (.env.*) are gitignored, so they survive; local code edits stop the update.
+        if (!quiet("git", ["diff", "--quiet", "HEAD"], dir)) return "modified";
+        await captured("git", ["fetch", "--depth", "1", "origin", ref], dir, step.update).catch(() => {
+          throw new Error(`could not fetch ${ref}. Pass --ref main for the latest source.`);
+        });
+        await captured("git", ["checkout", "--quiet", "--detach", "FETCH_HEAD"], dir, step.update);
+        return "updated";
+      }
       if (existsSync(dir)) throw new Error(`${shown} exists but is not a flare-ota checkout. Pass --dir <empty folder>.`);
       await captured("git", ["clone", "--depth", "1", "--branch", ref, REPO, dir], undefined, step.update).catch(() => {
         throw new Error(`could not fetch ${ref}. Pass --ref main for the latest source.`);
       });
       return "fetched";
     },
-    (how) => (how === "existing" ? `${shown} ${c.dim("· already here (git pull to update)")}` : `${ref} ${c.dim(`→ ${shown}`)}`),
+    (how) =>
+      how === "modified"
+        ? `${shown} ${c.yellow("· local changes, left as is")}`
+        : `${ref} ${c.dim(`→ ${shown}${how === "updated" ? " (updated)" : ""}`)}`,
   );
 
   const pm = pnpm();

@@ -86,7 +86,9 @@ if (!env("CLOUDFLARE_ACCOUNT_ID")) {
   if (accounts.length === 0) throw new Error("This Cloudflare login has no account.");
   let account = accounts[0]!;
   if (accounts.length > 1) {
-    accounts.forEach((a, i) => process.stdout.write(`    ${c.flame(String(i + 1))}  ${a.name.padEnd(28)}${c.dim(a.id)}\n`));
+    const nameWidth = Math.max(...accounts.map((a) => a.name.length)) + 3;
+    const numberWidth = String(accounts.length).length;
+    accounts.forEach((a, i) => process.stdout.write(`    ${c.flame(String(i + 1).padStart(numberWidth))}  ${a.name.padEnd(nameWidth)}${c.dim(a.id)}\n`));
     const line = await prompt(question("Account", "for this server", `1-${accounts.length}`));
     if (line === null || !process.stdin.isTTY) process.stdout.write(`${line ?? ""}\n`);
     const choice = Number((line ?? "").trim());

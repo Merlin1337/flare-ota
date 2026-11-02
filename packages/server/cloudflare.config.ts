@@ -2,7 +2,8 @@
 // D1 and R2 are found or created by name on deploy, so the repo holds no resource IDs.
 //
 //   cf deploy                  -> production Worker  (FLARE_OTA_NAME, default "flare-ota")
-//   cf deploy --mode staging   -> separate Worker    ("<name>-staging"), its own D1 and R2
+//   cf deploy --mode <stage>   -> separate Worker    ("<name>-<stage>"), its own D1 and R2
+//                                 (scripts/lib.ts workerName() must compute the same name)
 import { bindings, defineConfig, triggers } from "cf/config";
 import * as entrypoint from "./src/index.ts" with { type: "cf-worker" };
 
@@ -10,7 +11,8 @@ const env = (key: string) => process.env[key]?.trim() || undefined;
 
 export default defineConfig(({ mode }) => {
   const base = env("FLARE_OTA_NAME") ?? "flare-ota";
-  const name = mode === "staging" ? `${base}-staging` : base;
+  // Local dev keeps the base name; every other stage gets its own Worker and resources.
+  const name = !mode || mode === "production" || mode === "development" ? base : `${base}-${mode}`;
   const updatesHost = env("FLARE_OTA_UPDATES_HOST");
   const dashboardHost = env("FLARE_OTA_DASHBOARD_HOST");
   const vars: Record<string, ReturnType<typeof bindings.text>> = {};

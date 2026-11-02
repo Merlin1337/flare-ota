@@ -1,5 +1,8 @@
-// Guided first deployment of one stage. Safe to rerun: every step reuses what exists.
-//   pnpm server:setup --stage production
+// Guided first deployment of one stage of one app. Safe to rerun: every step reuses what exists.
+//   pnpm server:setup --stage production [--app myapp]
+//
+// One server serves one app. For a second app, run setup again with another --app: it gets its
+// own Worker, database, bucket, settings file (.env.<app>.<stage>), certificate and keychain entries.
 //
 // 1. asks for the non-secret settings and saves them to .env.<stage> (gitignored)
 // 2. generates the code-signing key in memory and the certificate your app embeds
@@ -14,9 +17,11 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { env, stageArgs, step, upsertEnvFile, workerName, SERVER_DIR } from "./lib.ts";
+import { env, keychainRead, keychainService, keychainWrite, stageArgs, step, upsertEnvFile, workerName, SERVER_DIR } from "./lib.ts";
 
-const { stage, envFile } = stageArgs();
+const parsed = stageArgs();
+const { stage } = parsed;
+const { app, envFile, forward } = parsed;
 // Lines are queued as they arrive, so piped answers (CI, agents) are never lost between prompts.
 const rl = createInterface({ input: process.stdin });
 const pending: string[] = [];
@@ -48,28 +53,12 @@ async function ask(key: string, question: string, fallback?: string): Promise<st
   return answer;
 }
 
-const keychainService = (what: string) => `flare-ota.${workerName(stage)}.${what}`;
-
-function keychainRead(service: string): string | null {
-  if (platform() !== "darwin") return null;
-  const result = spawnSync("security", ["find-generic-password", "-s", service, "-a", "flare-ota", "-w"], { encoding: "utf8" });
-  return result.status === 0 ? result.stdout.trim() : null;
-}
-
-/** Stores a secret in the macOS login keychain without putting it in argv (via `security -i`). */
-function keychainWrite(service: string, value: string) {
-  if (!/^[A-Za-z0-9+/=_-]+$/.test(value)) throw new Error("keychain values must be base64/base64url");
-  const result = spawnSync("security", ["-i"], { input: `add-generic-password -U -s ${service} -a flare-ota -w ${value}\n`, encoding: "utf8" });
-  if (result.status !== 0) throw new Error(`security failed: ${result.stderr}`);
-  if (keychainRead(service) !== value) throw new Error(`Could not read ${service} back from the keychain.`);
-}
-
 function run(script: string, extra: string[] = []) {
-  const result = spawnSync("node", [join(SERVER_DIR, "scripts", script), "--stage", stage, ...extra], { stdio: "inherit", env: process.env });
+  const result = spawnSync("node", [join(SERVER_DIR, "scripts", script), ...forward, ...extra], { stdio: "inherit", env: process.env });
   if (result.status !== 0) throw new Error(`${script} failed`);
 }
 
-console.log(`flare-ota setup for stage "${stage}" (settings in ${envFile})\n`);
+console.log(`flare-ota setup for ${workerName(stage)}, stage "${stage}" (settings in ${envFile})\n`);
 step("Settings");
 await ask("CLOUDFLARE_ACCOUNT_ID", "Cloudflare account ID (cf accounts list)");
 const updatesHost = await ask("FLARE_OTA_UPDATES_HOST", "Updates hostname, on a zone of this account", stage === "production" ? "ota.example.com" : `ota-${stage}.example.com`);
@@ -83,13 +72,13 @@ const settings: Record<string, string> = {
   FLARE_OTA_ACCESS_EMAILS: process.env.FLARE_OTA_ACCESS_EMAILS!,
   FLARE_OTA_APP_SCHEME: scheme,
 };
-if (env("FLARE_OTA_NAME")) settings.FLARE_OTA_NAME = env("FLARE_OTA_NAME")!;
+if (app) settings.FLARE_OTA_NAME = app;
 await upsertEnvFile(envFile, settings);
 console.log(`Saved to ${envFile}.`);
 
 step("Signing key, certificate and preview secret");
-const keyService = keychainService("signing-key-b64");
-const previewService = keychainService("preview-secret");
+const keyService = keychainService(stage, "signing-key-b64");
+const previewService = keychainService(stage, "preview-secret");
 let signingKey = env("FLARE_OTA_SIGNING_KEY") ?? (keychainRead(keyService) ? Buffer.from(keychainRead(keyService)!, "base64").toString() : null);
 const certDir = join(homedir(), ".flare-ota", workerName(stage));
 mkdirSync(certDir, { recursive: true, mode: 0o700 });
@@ -137,6 +126,7 @@ run("deploy.ts");
 
 step("First admin token");
 const me = env("FLARE_OTA_ACCESS_EMAILS")!.split(",")[0]!.trim();
+// On macOS the token goes to the keychain and is never printed (bootstrap-token --print to show it).
 run("bootstrap-token.ts", ["--name", me]);
 
 const waf = ((await prompt("\nApply the recommended WAF rules on the zone now? [Y/n]: ")) ?? "").trim().toLowerCase();
@@ -150,4 +140,4 @@ console.log(`\nDone. Next: in your Expo app run
 then build a new binary. On macOS, deploy again later with:
   FLARE_OTA_SIGNING_KEY="$(security find-generic-password -s ${keyService} -a flare-ota -w | base64 -d)" \\
   FLARE_OTA_PREVIEW_SECRET="$(security find-generic-password -s ${previewService} -a flare-ota -w)" \\
-  pnpm server:deploy --stage ${stage}`);
+  pnpm server:deploy ${forward.join(" ")}`);

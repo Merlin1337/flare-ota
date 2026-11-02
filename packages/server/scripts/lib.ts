@@ -2,10 +2,10 @@
 // `--stage <name>` (default production) and loads `<repo>/.env.<stage>` when it exists.
 // Secrets are read from the environment only; nothing secret is written to the repo.
 
-import { execFile, spawn } from "node:child_process";
+import { execFile, spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { platform, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify, type ParseArgsConfig } from "node:util";
@@ -13,13 +13,36 @@ import { parseArgs, promisify, type ParseArgsConfig } from "node:util";
 export const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const REPO_DIR = join(SERVER_DIR, "..", "..");
 
+const APP_NAME = /^[a-z][a-z0-9-]{0,30}$/;
+
+/** Settings file of one app's stage: `.env.<stage>` for the default app, `.env.<app>.<stage>` otherwise. */
+export function envFileFor(app: string | undefined, stage: string): string {
+  return join(REPO_DIR, app ? `.env.${app}.${stage}` : `.env.${stage}`);
+}
+
+/**
+ * Reads `--stage <name>` (default production) and `--app <name>`, then loads that app's stage
+ * settings. One server serves one app: `--app` picks the Worker name (FLARE_OTA_NAME), the
+ * settings file, the certificate folder and the keychain entries, so several apps can share a
+ * clone and a Cloudflare account without colliding.
+ */
 export function stageArgs(extra: NonNullable<ParseArgsConfig["options"]> = {}) {
-  const { values } = parseArgs({ options: { stage: { type: "string", default: "production" }, ...extra }, allowPositionals: true, strict: false });
+  const { values } = parseArgs({
+    options: { stage: { type: "string", default: "production" }, app: { type: "string" }, ...extra },
+    allowPositionals: true,
+    strict: false,
+  });
   const stage = String(values.stage);
   if (!/^[a-z][a-z0-9-]{0,20}$/.test(stage)) throw new Error("--stage must be a short lowercase name");
-  const envFile = join(REPO_DIR, `.env.${stage}`);
+  const app = typeof values.app === "string" ? values.app : undefined;
+  if (app !== undefined && !APP_NAME.test(app)) throw new Error("--app must be a short lowercase name (letters, digits, -)");
+  if (app) process.env.FLARE_OTA_NAME = app;
+  const envFile = envFileFor(app, stage);
   if (existsSync(envFile)) process.loadEnvFile(envFile);
-  return { stage, envFile, values };
+  if (app) process.env.FLARE_OTA_NAME = app;
+  /** Arguments that make a child script target the same app and stage. */
+  const forward = ["--stage", stage, ...(app ? ["--app", app] : [])];
+  return { stage, app, envFile, values, forward };
 }
 
 export function env(key: string): string | undefined {
@@ -132,6 +155,43 @@ export async function upsertEnvFile(path: string, values: Record<string, string>
     text = new RegExp(`^${key}=.*$`, "m").test(text) ? text.replace(new RegExp(`^${key}=.*$`, "m"), line) : `${text}${text && !text.endsWith("\n") ? "\n" : ""}${line}\n`;
   }
   await writeFile(path, text);
+}
+
+export const KEYCHAIN_ACCOUNT = "flare-ota";
+
+/** Keychain service name of one secret of one app's stage, e.g. flare-ota.myapp.admin-token. */
+export const keychainService = (stage: string, what: string) => `flare-ota.${workerName(stage)}.${what}`;
+
+export function keychainRead(service: string): string | null {
+  if (platform() !== "darwin") return null;
+  const result = spawnSync("security", ["find-generic-password", "-s", service, "-a", KEYCHAIN_ACCOUNT, "-w"], { encoding: "utf8" });
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+/** Stores a secret in the macOS login keychain without putting it in argv (via `security -i`). */
+export function keychainWrite(service: string, value: string) {
+  if (!/^[A-Za-z0-9+/=_-]+$/.test(value)) throw new Error("keychain values must be base64/base64url");
+  const result = spawnSync("security", ["-i"], { input: `add-generic-password -U -s ${service} -a ${KEYCHAIN_ACCOUNT} -w ${value}\n`, encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`security failed: ${result.stderr}`);
+  if (keychainRead(service) !== value) throw new Error(`Could not read ${service} back from the keychain.`);
+}
+
+/**
+ * Hands a newly created secret to the user. On macOS it goes to the login keychain and only the
+ * command that reads it back is printed, so the value never lands in a terminal log or an agent
+ * transcript. `--print` (or another OS) prints it once instead.
+ */
+export function deliverSecret(options: { service: string; label: string; print: boolean; value: string; usage: string }) {
+  if (platform() === "darwin" && !options.print) {
+    keychainWrite(options.service, options.value);
+    console.log(
+      `${options.label} stored in the macOS keychain as "${options.service}" (account ${KEYCHAIN_ACCOUNT}); it is not printed.\n` +
+        `  Use it:    ${options.usage.replace("$SECRET", `"$(security find-generic-password -s ${options.service} -a ${KEYCHAIN_ACCOUNT} -w)"`)}\n` +
+        `  Back up:   security find-generic-password -s ${options.service} -a ${KEYCHAIN_ACCOUNT} -w | pbcopy   (then paste into your password manager)`,
+    );
+    return;
+  }
+  console.log(`${options.label} (store it now in your password manager; it is not shown again):\n\n${options.value}\n`);
 }
 
 export function step(title: string) {

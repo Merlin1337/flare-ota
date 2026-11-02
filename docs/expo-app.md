@@ -65,10 +65,16 @@ a tested group: `flare-ota promote <groupId> --branch production`.
 `flare-ota publish` runs `expo export` on your machine or CI. `EXPO_PUBLIC_*` values are inlined
 into the bundle **at export time**, from your shell and `.env*` files, not from your EAS build
 profile. If `.env.local` points at a local API, a publish from your laptop ships that URL to every
-user. Export the production values explicitly in the publish environment:
+user.
+
+`publish` lists every `EXPO_PUBLIC_*` value it is about to inline and where it comes from. On the
+`production` branch (or a branch the `production` channel serves) it refuses values that point at
+`localhost` or a private IP; `--allow-local` overrides that. Set the production values explicitly:
 
 ```sh
 EXPO_PUBLIC_API_URL=https://api.example.com npx flare-ota publish --branch production -m "…"
+# or reuse the env block of an eas.json build profile (variables stored on EAS servers are not read):
+npx flare-ota publish --branch production --profile production -m "…"
 ```
 
 ## Preview links

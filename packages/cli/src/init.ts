@@ -53,6 +53,13 @@ export async function init(options: InitOptions): Promise<string[]> {
       `Commit certs/certificate.pem; deploy the server with the private key (FLARE_OTA_SIGNING_KEY).`,
     );
   }
+  const native = ["ios", "android"].filter((dir) => existsSync(join(options.projectDir, dir)));
+  if (native.length) {
+    notes.push(
+      `Warning: ${native.map((dir) => `${dir}/`).join(" and ")} already ${native.length > 1 ? "exist" : "exists"} here. \`expo run:*\` and local builds reuse ${native.length > 1 ? "them" : "it"} and keep the old updates URL, channel and certificate.`,
+      `  Run \`npx expo prebuild --clean\` before the next build (it regenerates the native folders from app.json).`,
+    );
+  }
   notes.push("These settings are native: build and ship a new binary before devices can receive updates.");
   return notes;
 }

@@ -6,6 +6,7 @@ import { scopeAllows, type AssetRef, type GroupSummary, type Overview, type Plat
 import type { Client } from "./api.ts";
 import { CODE_SIGNING_EKU, probeSignature } from "./doctor.ts";
 import { expoConfig, exportBundles, gitCommit, runtimeVersion } from "./expo.ts";
+import { localHost, publicEnv } from "./public-env.ts";
 import { bytes, c, progressBar, short, silent, type Reporter } from "./ui.ts";
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -77,6 +78,10 @@ export interface PublishOptions {
   force?: boolean;
   /** Run the signing checks before exporting (default true). */
   checks?: boolean;
+  /** eas.json build profile whose `env` the export also uses (never guessed). */
+  profile?: string;
+  /** Publish to production even when an EXPO_PUBLIC_* value points at localhost or a private IP. */
+  allowLocal?: boolean;
   reporter?: Reporter;
   /** Expo tooling, replaceable in tests. */
   tools?: Partial<ExpoTools>;
@@ -139,6 +144,34 @@ export async function publishUpdate(client: Client, options: PublishOptions): Pr
     r.warn(`No channel serves ${options.branch}: no device gets this update until \`flare-ota channels set <channel> ${options.branch}\`.`);
   }
 
+  const production = options.branch === "production" || me.serving.includes("production");
+  const env = await r.step(
+    "Environment",
+    async () => {
+      const env = await publicEnv(dir, options.profile ? { profile: options.profile } : {});
+      const local = Object.entries(env.values).flatMap(([key, { value }]) => {
+        const host = localHost(value);
+        return host ? [`${key}=${value}`] : [];
+      });
+      if (local.length && production && !options.allowLocal) {
+        throw new Error(
+          `${local.join(", ")} would ship to every production device. Set the production value in the shell (or --profile <eas profile>)` +
+            ` (or pass --allow-local if this is intended).`,
+        );
+      }
+      return { ...env, local };
+    },
+    (env) => {
+      const count = Object.keys(env.values).length;
+      const from = env.profile ? c.dim(` · eas.json profile "${env.profile}"`) : c.dim(" · shell and .env files");
+      return `${count} EXPO_PUBLIC_* ${count === 1 ? "value" : "values"}${from}`;
+    },
+  );
+  for (const [key, { value, source }] of Object.entries(env.values).sort(([a], [b]) => a.localeCompare(b))) {
+    r.line(`    ${c.dim(key)} ${value} ${c.dim(`(${source === "eas" ? "eas.json" : source === "dotenv" ? ".env" : "shell"})`)}`);
+  }
+  for (const value of env.local) r.warn(`${value} points at a local or private host.`);
+
   if (full) {
     const signed = await r.step(
       "Code signing",
@@ -164,7 +197,7 @@ export async function publishUpdate(client: Client, options: PublishOptions): Pr
       "Export",
       async (step) => {
         step.update(`expo export --platform ${options.platforms.join(",")}`);
-        await tools.exportBundles(dir, options.platforms, outputDir);
+        await tools.exportBundles(dir, options.platforms, outputDir, env.inject);
         const read = await readExport(outputDir, options.platforms);
         // The app icon travels with the publish so the dashboard can show which app this is.
         const appIcon = await iconFile(dir, config);

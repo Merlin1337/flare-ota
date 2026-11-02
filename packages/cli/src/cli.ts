@@ -18,7 +18,7 @@ App setup
   doctor                                                          Check app config, server, token and signing
 
 Releases
-  publish --branch <b> --message <m> [--platform ios|android] [--rollout <1-100>] [--skip-checks]
+  publish --branch <b> --message <m> [--platform ios|android] [--rollout <1-100>] [--profile <eas profile>] [--skip-checks] [--allow-local]
   groups [--branch <b>] [--limit n]                               List published update groups
   rollout <groupId> <percent>                                     Raise a rollout (it only goes up)
   pause <groupId> | resume <groupId>                              Stop / resume offering a group
@@ -58,6 +58,8 @@ const { values: flags, positionals } = parseArgs({
     json: { type: "boolean" },
     force: { type: "boolean" },
     "skip-checks": { type: "boolean" },
+    "allow-local": { type: "boolean" },
+    profile: { type: "string" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -160,6 +162,8 @@ async function main() {
         rolloutPercent,
         force: Boolean(flags.force),
         checks: !flags["skip-checks"],
+        ...(flags.profile ? { profile: flags.profile } : {}),
+        allowLocal: Boolean(flags["allow-local"]),
         ...(json ? {} : { reporter: ui }),
       });
       out(result, () => published(result, (performance.now() - started) / 1000));

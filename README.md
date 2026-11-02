@@ -95,7 +95,7 @@ You need a Cloudflare account with a domain on it, Node 24.22+ and pnpm.
 ```sh
 git clone https://github.com/Merlin1337/flare-ota && cd flare-ota && pnpm install
 npx cf auth login
-pnpm server:setup --stage production
+pnpm server:setup --stage production    # one server per app: add --app <name> for a second one
 ```
 
 **2. Connect your Expo app**

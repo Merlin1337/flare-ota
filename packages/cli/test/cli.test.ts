@@ -78,7 +78,7 @@ describe("publish end to end", () => {
     expect(uploaded).toEqual({ files: 2, bytes: "console.log('v1')".length + "png-bytes".length, reused: 0 });
     expect(devices).toEqual({ ios: 0 });
     expect(dashboardUrl).toBe(`https://admin.test/groups/${group.id}`);
-    expect(steps.lines.map((l) => l.split(":")[0])).toEqual(["✓ App config", "✓ Server", "✓ Code signing", "! The app has no codeSigningCertificate", "✓ Export", "✓ Runtime", "✓ Upload", "✓ Publish"]);
+    expect(steps.lines.map((l) => l.split(":")[0])).toEqual(["✓ App config", "✓ Server", "✓ Environment", "✓ Code signing", "! The app has no codeSigningCertificate", "✓ Export", "✓ Runtime", "✓ Upload", "✓ Publish"]);
     expect(steps.lines[0]).toContain("demo 1.2.0");
     // Same content again: nothing to upload, and a branch no channel serves is called out.
     const again = recorder();
@@ -132,7 +132,79 @@ describe("publish end to end", () => {
   });
 });
 
+describe("publish environment", () => {
+  const appWith = async (files: Record<string, string>) => {
+    const dir = await mkdtemp(join(tmpdir(), "flare-env-"));
+    for (const [name, content] of Object.entries(files)) await writeFile(join(dir, name), content);
+    return dir;
+  };
+  const toolsFor = (seen: Record<string, string>[]) => ({
+    expoConfig: async () => ({ name: "env", updates: { url: `${base}/manifest` } }),
+    exportBundles: async (_cwd: string, _platforms: unknown, out: string, extra: Record<string, string> = {}) => {
+      seen.push(extra);
+      await fakeExport(out, "console.log('env')");
+    },
+    runtimeVersion: async () => "rt-env",
+    gitCommit: async () => undefined,
+  });
+
+  it("refuses a localhost EXPO_PUBLIC_* value on production before exporting", async () => {
+    const dir = await appWith({ ".env.local": "EXPO_PUBLIC_API_URL=http://localhost:3000\n" });
+    const seen: Record<string, string>[] = [];
+    const steps = recorder();
+    const client = new Client({ server: base, token: await h.token("publish", "env-local") });
+    await expect(
+      publishUpdate(client, { projectDir: dir, branch: "production", message: "x", platforms: ["ios"], rolloutPercent: 100, checks: false, tools: toolsFor(seen), reporter: steps }),
+    ).rejects.toThrow(/EXPO_PUBLIC_API_URL=http:\/\/localhost:3000/);
+    expect(seen).toHaveLength(0);
+    expect(steps.lines.at(-1)).toMatch(/^✗ Environment/);
+  });
+
+  it("uses the eas.json profile named with --profile, which overrides .env files", async () => {
+    const dir = await appWith({
+      ".env": "EXPO_PUBLIC_API_URL=http://192.168.1.20:3000\n",
+      "eas.json": JSON.stringify({ build: { base: { env: { EXPO_PUBLIC_SENTRY: "on" } }, production: { extends: "base", env: { EXPO_PUBLIC_API_URL: "https://api.example.com" } } } }),
+    });
+    const seen: Record<string, string>[] = [];
+    const steps = recorder();
+    const client = new Client({ server: base, token: await h.token("publish", "env-eas") });
+    await publishUpdate(client, { projectDir: dir, branch: "production", message: "eas", platforms: ["ios"], rolloutPercent: 100, checks: false, profile: "production", tools: toolsFor(seen), reporter: steps });
+    expect(seen[0]).toEqual({ EXPO_PUBLIC_SENTRY: "on", EXPO_PUBLIC_API_URL: "https://api.example.com" });
+    expect(steps.lines.find((l) => l.startsWith("✓ Environment"))).toContain('eas.json profile "production"');
+    expect(steps.lines.some((l) => l.includes("EXPO_PUBLIC_API_URL https://api.example.com"))).toBe(true);
+  });
+
+  it("only warns about a private host off production", async () => {
+    const dir = await appWith({ ".env": "EXPO_PUBLIC_API_URL=http://10.0.0.5\n" });
+    const steps = recorder();
+    const client = new Client({ server: base, token: await h.token("publish", "env-staging") });
+    await publishUpdate(client, { projectDir: dir, branch: "staging-env", message: "s", platforms: ["ios"], rolloutPercent: 100, checks: false, tools: toolsFor([]), reporter: steps });
+    expect(steps.lines.some((l) => l.startsWith("! EXPO_PUBLIC_API_URL=http://10.0.0.5"))).toBe(true);
+  });
+});
+
+describe("localHost", () => {
+  it("spots local and private hosts only", async () => {
+    const { localHost } = await import("../src/public-env.ts");
+    for (const value of ["http://localhost:8081", "http://127.0.0.1", "10.1.2.3:80", "http://192.168.0.2/api", "http://172.20.0.1", "http://[::1]:3000", "http://mac.local"]) {
+      expect(localHost(value), value).not.toBeNull();
+    }
+    for (const value of ["https://api.example.com", "http://172.32.0.1", "true", "pk_live_abc", ""]) {
+      expect(localHost(value), value).toBeNull();
+    }
+  });
+});
+
 describe("init", () => {
+  it("warns when native folders would keep the old settings", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "flare-native-"));
+    await writeFile(join(dir, "app.json"), JSON.stringify({ expo: { name: "demo", scheme: "demo" } }));
+    await mkdir(join(dir, "ios"));
+    const notes = await init({ projectDir: dir, server: "https://ota.example.com", channel: "production", certificate: "./certs/certificate.pem" });
+    expect(notes.some((n) => n.startsWith("Warning: ios/ already exists"))).toBe(true);
+    expect(notes.some((n) => n.includes("npx expo prebuild --clean"))).toBe(true);
+  });
+
   it("writes the updates config and keeps a backup", async () => {
     const dir = await mkdtemp(join(tmpdir(), "flare-app-"));
     await writeFile(join(dir, "app.json"), JSON.stringify({ expo: { name: "demo", updates: { requestHeaders: { "x-keep": "1" } } } }));

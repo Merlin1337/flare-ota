@@ -32,12 +32,21 @@ and pick a team name") and wait.
 ```sh
 git clone https://github.com/Merlin1337/flare-ota && cd flare-ota && pnpm install
 npx cf auth login            # interactive: the user completes it in the browser
-pnpm server:setup --stage production
+pnpm server:setup --stage production [--app <name>]
 ```
 
-Setup is guided and rerunnable. It prints a first admin token once: ask the user to store it in
-their password manager (or store it in the macOS keychain with `security -i`, never in argv),
-then confirm it reads back. Tell the user to back up the signing key (`security find-generic-password -s flare-ota.<name>.signing-key-b64 -a flare-ota -w | pbcopy`
+**Hand setup to the user.** It creates DNS records, an Access application and WAF rules on their
+zone; agent permission systems often block that, and it is theirs to approve anyway. Give them the
+exact command to run themselves (in Claude Code, prefixed with `!`), then continue from its output.
+The same goes for `access`, `waf` and `deploy-token`.
+
+One server serves one app. For a second app, use `--app <name>` on setup and every
+`pnpm server:*` script: it keeps its own Worker, database, settings file, certificate and keychain entries.
+
+Setup creates a first admin token. On macOS it is stored in the keychain as
+`flare-ota.<name>.admin-token` (account `flare-ota`) and never printed: read it inline when needed.
+Elsewhere it is printed once (`--print` forces that): ask the user to store it in their password
+manager, never paste it back into the conversation. Tell the user to back up the signing key (`security find-generic-password -s flare-ota.<name>.signing-key-b64 -a flare-ota -w | pbcopy`
 on macOS): losing it means a store build for every user.
 
 ## Connect an Expo app
@@ -50,8 +59,8 @@ on macOS): losing it means a store build for every user.
 4. Add a URL `scheme` and the preview hook (`handlePreviewUrl` from `flare-ota/expo`) if the user
    wants preview links.
 5. These are native settings: a **new store/release build** is required before OTA works. Say so.
-   If the app has a committed `ios/`/`android/` folder, run `npx expo prebuild --clean` first or
-   the build keeps the old URL/certificate.
+   If the app has an `ios/`/`android/` folder (`init` warns about it), run `npx expo prebuild --clean`
+   first or the build keeps the old URL/certificate.
 6. `npx flare-ota doctor` must pass (it verifies the server's signature against the certificate).
 
 ## Everyday operations
@@ -67,9 +76,9 @@ npx flare-ota promote <groupId> --branch production
 npx flare-ota preview <groupId> --ttl 60                      # QR for one device
 ```
 
-Before publishing, check what `EXPO_PUBLIC_*` values the export will inline (shell and `.env*`
-files): a local `.env.local` must not leak a dev API URL into production. Export the production
-values explicitly.
+`publish` lists the `EXPO_PUBLIC_*` values the export will inline and refuses localhost or private
+IPs on production. Do not reach for `--allow-local`: set the production values in the shell or pass
+`--profile <eas build profile>` to reuse that profile's `env` block.
 
 A native change (new native module, permissions, `app.json` native fields) changes the
 fingerprint: an OTA cannot deliver it. Tell the user a store build is needed.

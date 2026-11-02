@@ -28,11 +28,21 @@ dashboard and your app's URL scheme, then:
    (macOS: the key goes to the login keychain; Linux: a 0600 file you move to your password manager);
 2. creates the Cloudflare Access application for the dashboard;
 3. creates the D1 database, applies migrations, deploys the Worker with its secrets;
-4. prints a first **admin** token, once;
+4. creates a first **admin** token: on macOS it goes to the login keychain
+   (`flare-ota.<name>.admin-token`, account `flare-ota`) and is never printed; elsewhere, or with
+   `bootstrap-token --print`, it is printed once;
 5. optionally applies the WAF rules; then runs `doctor`.
 
 Everything it does is a script you can rerun on its own (`packages/server/scripts/`):
 `access`, `migrate`, `deploy`, `bootstrap-token`, `waf`, `deploy-token`, `doctor`.
+
+**One server per app.** For a second app, pass `--app <name>` to `setup` and to every script
+(`pnpm server:deploy --stage production --app myapp`): it gets its own Worker, database, bucket,
+settings file (`.env.<name>.<stage>`), certificate folder (`~/.flare-ota/<name>/`) and keychain entries.
+
+**Using an AI agent?** Setup creates DNS records, an Access application and WAF rules on your zone.
+Agents that guard infrastructure changes (Claude Code's auto mode, for one) will refuse it: run
+setup yourself, then let the agent take over.
 
 Back up the signing key now. Installed apps only trust its certificate: losing the key means a
 new store build for everyone.
@@ -55,7 +65,8 @@ new release binary** (`npx expo run:ios --configuration Release`, EAS Build, you
 Create a token for publishing, in the dashboard (Tokens) or with the admin token:
 
 ```sh
-FLARE_OTA_TOKEN=<admin token> npx flare-ota tokens create laptop --scope publish
+FLARE_OTA_TOKEN="$(security find-generic-password -s flare-ota.flare-ota.admin-token -a flare-ota -w)" \
+  npx flare-ota tokens create laptop --scope publish
 ```
 
 ## 3. Publish

@@ -25,11 +25,11 @@ export async function runtimeVersion(cwd: string, platform: Platform): Promise<s
   return parsed.runtimeVersion;
 }
 
-export async function exportBundles(cwd: string, platforms: Platform[], outputDir: string): Promise<void> {
+export async function exportBundles(cwd: string, platforms: Platform[], outputDir: string, extraEnv: Record<string, string> = {}): Promise<void> {
   await run("npx", ["--no-install", "expo", "export", "--output-dir", outputDir, ...platforms.flatMap((p) => ["--platform", p])], {
     cwd,
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, NODE_ENV: "production" },
+    env: { ...process.env, ...extraEnv, NODE_ENV: "production" },
   });
 }
 

@@ -195,5 +195,6 @@ export function deliverSecret(options: { service: string; label: string; print: 
 }
 
 export function step(title: string) {
-  console.log(`\n▸ ${title}`);
+  // Plain text: setup captures these scripts' output and shows it only on failure.
+  console.log(`\n› ${title}`);
 }

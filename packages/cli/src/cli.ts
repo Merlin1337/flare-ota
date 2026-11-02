@@ -144,7 +144,7 @@ async function main() {
 
   switch (command) {
     case "setup": {
-      setup({ stage: flags.stage ?? "production", ...(flags.app ? { app: flags.app } : {}), ...(flags.dir ? { dir: flags.dir } : {}), ...(flags.ref ? { ref: flags.ref } : {}) });
+      await setup({ stage: flags.stage ?? "production", ...(flags.app ? { app: flags.app } : {}), ...(flags.dir ? { dir: flags.dir } : {}), ...(flags.ref ? { ref: flags.ref } : {}) });
       return;
     }
     case "init": {

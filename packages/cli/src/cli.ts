@@ -162,7 +162,8 @@ async function main() {
     case "doctor": {
       const checks = await doctor(projectDir, client());
       const mark = (check: (typeof checks)[number]) => (check.ok ? c.green("✓") : check.warn ? c.yellow("!") : c.red("✗"));
-      out(checks, () => checks.map((check) => `  ${mark(check)} ${check.name.padEnd(22)}${check.ok ? check.detail : check.warn ? c.yellow(check.detail) : c.red(check.detail)}`).join("\n"));
+      const width = Math.max(...checks.map((check) => check.name.length)) + 2;
+      out(checks, () => checks.map((check) => `  ${mark(check)} ${check.name.padEnd(width)}${check.ok ? check.detail : check.warn ? c.yellow(check.detail) : c.red(check.detail)}`).join("\n"));
       if (checks.some((check) => !check.ok && !check.warn)) process.exitCode = 1;
       return;
     }

@@ -1,6 +1,7 @@
 import { base64url, utf8 } from "@flare-ota/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { accessIdentity } from "../src/auth.ts";
+import type { Env } from "../src/env.ts";
 import { resetDeviceDebounce } from "../src/devices.ts";
 import { assetHash, bearer, harness, manifestHeaders, parseMultipart, publish, uploadBundle, verifySignature, type Harness } from "./support.ts";
 
@@ -371,5 +372,14 @@ describe("device write budget", () => {
     expect(await store.recordCheck(device)).toBe(true);
     expect(await store.recordCheck(device)).toBe(false);
     expect(await store.recordCheck({ ...device, currentUpdateId: null })).toBe(true);
+  });
+});
+
+describe("dashboard status codes", () => {
+  it("answers 404 for unknown pages and releases", async () => {
+    const h = await harness({ INSECURE_DASHBOARD: "1" } as Partial<Env>);
+    expect((await h.fetch("/nope", { host: "admin.test" })).status).toBe(404);
+    expect((await h.fetch("/groups/00000000-0000-0000-0000-000000000000", { host: "admin.test" })).status).toBe(404);
+    expect((await h.fetch("/", { host: "admin.test" })).status).toBe(200);
   });
 });

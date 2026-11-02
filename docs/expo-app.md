@@ -84,7 +84,26 @@ signed, expiring token, revocable from the server. It uses `Updates.setUpdateReq
 which keeps expo-updates' anti-bricking protections enabled (unlike changing the update URL).
 
 1. Declare the header at build time (`init` does it): `"flare-preview": ""` in `updates.requestHeaders`.
-2. Give the app a URL `scheme` and handle the link:
+2. Give the app a URL `scheme` and handle the link.
+
+   With **expo-router**, catch it in `app/+native-intent.tsx`, before the router tries to open it as
+   a screen (it would show "Unmatched route"):
+
+```tsx
+// app/+native-intent.tsx
+import { handlePreviewUrl, isPreviewUrl } from "flare-ota/expo";
+
+export function redirectSystemPath({ path }: { path: string; initial: boolean }) {
+  if (isPreviewUrl(path)) {
+    // Downloads the previewed update and reloads into it.
+    handlePreviewUrl(path).catch((error) => console.warn("preview", error));
+    return "/";
+  }
+  return path;
+}
+```
+
+   Without expo-router, listen to incoming links:
 
 ```tsx
 import * as Linking from "expo-linking";

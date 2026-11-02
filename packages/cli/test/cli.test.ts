@@ -247,3 +247,25 @@ describe("versions", () => {
     expect(pkg.version).toBe(FLARE_OTA_VERSION);
   });
 });
+
+describe("init and preview helpers", () => {
+  it("warns when the certificate is gitignored", async () => {
+    const { execFileSync } = await import("node:child_process");
+    const dir = await mkdtemp(join(tmpdir(), "flare-ignored-"));
+    execFileSync("git", ["init", "-q"], { cwd: dir });
+    await writeFile(join(dir, ".gitignore"), "certs/\n");
+    await writeFile(join(dir, "app.json"), JSON.stringify({ expo: { name: "demo", scheme: "demo" } }));
+    const notes = await init({ projectDir: dir, server: "https://ota.example.com", channel: "production", certificate: "./certs/certificate.pem" });
+    expect(notes.some((n) => n.includes("is gitignored"))).toBe(true);
+  });
+
+  it("recognises preview links only", async () => {
+    const { vi } = await import("vitest");
+    vi.doMock("expo-updates", () => ({}));
+    const { isPreviewUrl } = await import("../src/expo-client.ts");
+    expect(isPreviewUrl("myapp://flare-ota/preview?token=abc")).toBe(true);
+    expect(isPreviewUrl("myapp://flare-ota/preview")).toBe(false);
+    expect(isPreviewUrl("myapp://settings")).toBe(false);
+    expect(isPreviewUrl(null)).toBe(false);
+  });
+});

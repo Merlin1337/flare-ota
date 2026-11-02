@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { copyFile, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -45,6 +46,12 @@ export async function init(options: InitOptions): Promise<string[]> {
     if (!expo.scheme) notes.push(`Add a URL "scheme" to app.json so preview links can open the app.`);
   } else {
     throw new Error(`No app.json or app.config.* in ${options.projectDir}.`);
+  }
+  // The certificate is public and must reach every build (CI, EAS): a gitignored one silently
+  // ships binaries without it, or with a stale copy.
+  const ignored = spawnSync("git", ["check-ignore", "-q", options.certificate], { cwd: options.projectDir }).status === 0;
+  if (ignored) {
+    notes.push(`Warning: ${options.certificate} is gitignored. It is public and every build needs it: remove it from .gitignore and commit it.`);
   }
   if (!existsSync(join(options.projectDir, options.certificate))) {
     notes.push(

@@ -62,7 +62,7 @@ permissions block it.
 
 ## Connect an Expo app
 
-1. `npx expo install expo-updates` and `npm i -D flare-ota` in the app.
+1. `npx expo install expo-updates` and `npm i flare-ota` in the app.
 2. Copy the certificate printed by setup to `certs/certificate.pem`; commit it.
 3. `FLARE_OTA_URL=https://<updates-host> npx flare-ota init --channel production`.
    With a dynamic `app.config.*`, merge the printed fields instead. For staging builds, use the

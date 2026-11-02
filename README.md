@@ -103,7 +103,7 @@ does the same.
 **2. Connect your Expo app**
 
 ```sh
-npx expo install expo-updates && npm i -D flare-ota
+npx expo install expo-updates && npm i flare-ota
 cp ~/.flare-ota/flare-ota/certificate.pem certs/certificate.pem   # printed by setup
 FLARE_OTA_URL=https://ota.example.com npx flare-ota init --channel production
 ```
@@ -128,7 +128,7 @@ only what the server doesn't have, and ends with the reach, the dashboard link a
   <img src="docs/assets/cli.png" alt="flare-ota publish: checks, export, upload and a summary with the dashboard link and next commands" width="100%">
 </p>
 
-New release? `npm i -D flare-ota@latest`, then `npx flare-ota upgrade` redeploys your server to
+New release? `npm i flare-ota@latest`, then `npx flare-ota upgrade` redeploys your server to
 match, with no question asked. Full walkthrough in [docs/quick-start.md](docs/quick-start.md).
 
 ## Talk to it from your AI agent

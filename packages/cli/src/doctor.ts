@@ -70,7 +70,8 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
     add("updates.url", updates.url === expected, `${updates.url ?? "(unset)"}${updates.url === expected ? "" : ` (expected ${expected})`}`);
     const channel = updates.requestHeaders?.["expo-channel-name"];
     add("channel", Boolean(channel), channel ? `expo-channel-name: ${channel}` : "declare updates.requestHeaders['expo-channel-name']");
-    add("preview header", PREVIEW_HEADER in (updates.requestHeaders ?? {}), `updates.requestHeaders['${PREVIEW_HEADER}'] must be declared (empty string) for preview links`, true);
+    const previewDeclared = PREVIEW_HEADER in (updates.requestHeaders ?? {});
+    add("preview header", previewDeclared, previewDeclared ? `${PREVIEW_HEADER} declared` : `declare updates.requestHeaders['${PREVIEW_HEADER}'] (empty string) for preview links`, true);
     add("runtime version", Boolean(config.runtimeVersion), JSON.stringify(config.runtimeVersion ?? "(unset)"));
     add("URL scheme", Boolean(config.scheme), config.scheme ? String(config.scheme) : "needed to open preview links", true);
     const meta = updates.codeSigningMetadata ?? {};

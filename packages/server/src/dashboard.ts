@@ -513,7 +513,7 @@ async function confirmRollback(store: Store, actor: string, host: string, params
 
 async function groupPage(store: Store, actor: string, id: string, host: string, flash = ""): Promise<Response> {
   const group = await store.group(id);
-  if (!group) return page("Not found", actor, `<h1>Release not found</h1>`, "", host);
+  if (!group) return withStatus(page("Not found", actor, `<h1>Release not found</h1>`, "", host), 404);
   const [allMetrics, channels] = await Promise.all([store.metrics(group.branch, null, 50), store.listChannels()]);
   const metrics = allMetrics.filter((m) => m.groupId === id);
   const rollout = Math.max(...group.updates.map((u) => u.rolloutPercent));
@@ -654,7 +654,7 @@ async function render(request: Request, env: Env, store: Store, services: Servic
       if (groupMatch) return await groupPage(store, actor, groupMatch[1]!, host);
       if (url.pathname === "/audit") return await auditPage(store, actor, host);
       if (url.pathname === "/tokens") return await tokensPage(store, actor, host, "", url.searchParams.get("new") === "1");
-      return page("Not found", actor, `<h1>Not found</h1>`, "", host);
+      return withStatus(page("Not found", actor, `<h1>Not found</h1>`, "", host), 404);
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
     // Forms are only accepted from the dashboard itself: same Origin, or (when a browser withholds
@@ -705,8 +705,12 @@ async function render(request: Request, env: Env, store: Store, services: Servic
   } catch (error) {
     const response = errorResponse(error);
     const { error: message } = (await response.json()) as { error: string };
-    return page("Error", actor, `<div class="flash bad"><div><h2 style="margin:0 0 6px;font-size:16px">That did not work</h2><p class="sub" style="margin:0">${esc(message)}</p></div></div><a class="tag" href="/">Back to overview</a>`, "", host);
+    return withStatus(page("Error", actor, `<div class="flash bad"><div><h2 style="margin:0 0 6px;font-size:16px">That did not work</h2><p class="sub" style="margin:0">${esc(message)}</p></div></div><a class="tag" href="/">Back to overview</a>`, "", host), response.status);
   }
+}
+
+function withStatus(response: Response, status: number): Response {
+  return new Response(response.body, { status, headers: response.headers });
 }
 
 function redirect(location: string): Response {

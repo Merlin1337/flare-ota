@@ -1,6 +1,6 @@
 {
   "name": "flare-ota",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Self-hosted OTA updates for Expo on Cloudflare: publish, roll out, roll back, preview and MCP from the CLI.",
   "license": "MIT",
   "type": "module",

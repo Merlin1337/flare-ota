@@ -58,7 +58,7 @@ new store build for everyone.
 ### Upgrading
 
 ```sh
-npm i -D flare-ota@latest          # in your app: the CLI
+npm i flare-ota@latest          # in your app: the CLI
 npx flare-ota upgrade              # the server, to the CLI's version (--stage, --app as for setup)
 ```
 
@@ -73,7 +73,7 @@ as it is, never moved.
 ```sh
 cd your-expo-app
 npx expo install expo-updates
-npm i -D flare-ota
+npm i flare-ota      # a dependency, not a devDependency: the app imports flare-ota/expo
 mkdir -p certs && cp ~/.flare-ota/flare-ota/certificate.pem certs/
 export FLARE_OTA_URL=https://ota.example.com
 npx flare-ota init --channel production

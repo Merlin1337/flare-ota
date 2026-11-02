@@ -25,6 +25,11 @@ function channelHeaders(): Record<string, string> {
   return Updates.channel ? { "expo-channel-name": Updates.channel } : {};
 }
 
+/** True for a flare-ota preview link, synchronously: use it to keep a router from navigating to it. */
+export function isPreviewUrl(url: string | null | undefined): boolean {
+  return Boolean(url && previewToken(url));
+}
+
 /** Returns true if the URL was a preview link (and the app reloads into the previewed update). */
 export async function handlePreviewUrl(url: string | null | undefined): Promise<boolean> {
   const token = url ? previewToken(url) : null;

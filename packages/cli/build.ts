@@ -24,7 +24,8 @@ await build({
 });
 await writeFile(
   "dist/expo.d.ts",
-  `export declare function handlePreviewUrl(url: string | null | undefined): Promise<boolean>;
+  `export declare function isPreviewUrl(url: string | null | undefined): boolean;
+export declare function handlePreviewUrl(url: string | null | undefined): Promise<boolean>;
 export declare function exitPreview(): Promise<void>;
 export declare function reportAppVersion(version: string | null | undefined): Promise<void>;
 `,

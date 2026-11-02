@@ -128,7 +128,8 @@ only what the server doesn't have, and ends with the reach, the dashboard link a
   <img src="docs/assets/cli.png" alt="flare-ota publish: checks, export, upload and a summary with the dashboard link and next commands" width="100%">
 </p>
 
-Full walkthrough in [docs/quick-start.md](docs/quick-start.md).
+New release? `npm i -D flare-ota@latest`, then `npx flare-ota upgrade` redeploys your server to
+match, with no question asked. Full walkthrough in [docs/quick-start.md](docs/quick-start.md).
 
 ## Talk to it from your AI agent
 

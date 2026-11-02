@@ -235,3 +235,15 @@ describe("helpers", () => {
     expect(lines.length).toBeGreaterThan(10);
   });
 });
+
+describe("versions", () => {
+  it("orders releases and treats a missing version as oldest", async () => {
+    const { compareVersions, FLARE_OTA_VERSION } = await import("@flare-ota/core");
+    expect(compareVersions("0.1.2", "0.1.3")).toBeLessThan(0);
+    expect(compareVersions("0.2.0", "0.1.9")).toBeGreaterThan(0);
+    expect(compareVersions(undefined, "0.1.3")).toBeLessThan(0);
+    expect(compareVersions(FLARE_OTA_VERSION, FLARE_OTA_VERSION)).toBe(0);
+    const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    expect(pkg.version).toBe(FLARE_OTA_VERSION);
+  });
+});

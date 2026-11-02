@@ -3,13 +3,15 @@
 // (default ~/.flare-ota/server): later deploys and scripts run from there.
 
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { c, ReportedError, terminal } from "./ui.ts";
+import { c, ReportedError, terminal, type Reporter } from "./ui.ts";
 
 const REPO = "https://github.com/Merlin1337/flare-ota.git";
+/** Inside .git of the checkouts this CLI clones: only those are moved to a new version. */
+const MANAGED_MARKER = "flare-ota-managed";
 
 export interface SetupOptions {
   dir?: string;
@@ -29,9 +31,9 @@ function run(command: string, args: string[], cwd?: string): boolean {
 }
 
 /** Runs a command with its output captured; the log is printed only if it fails. */
-function captured(command: string, args: string[], cwd: string | undefined, update: (detail: string) => void): Promise<void> {
+export function captured(command: string, args: string[], cwd: string | undefined, update: (detail: string) => void, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   return new Promise((resolvePromise, reject) => {
-    const child = spawn(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(command, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
     let log = "";
     const take = (chunk: Buffer) => {
       log += chunk.toString();
@@ -60,7 +62,8 @@ function pnpm(): string[] {
   throw new Error("The server needs pnpm: run `corepack enable` (or `npm i -g pnpm`), then retry.");
 }
 
-export async function setup(options: SetupOptions): Promise<void> {
+/** Validates the tools, brings the server source to this CLI's version, installs it, logs in. */
+export async function prepareServer(options: SetupOptions, title: string, r: Reporter = terminal()) {
   const [major, minor] = process.versions.node.split(".").map(Number) as [number, number];
   if (major < 24 || (major === 24 && minor < 22)) throw new Error(`The server scripts need Node 24.22+ (this is ${process.versions.node}).`);
   if (!quiet("git", ["--version"])) throw new Error("git is required to fetch the server source.");
@@ -68,17 +71,18 @@ export async function setup(options: SetupOptions): Promise<void> {
   if (!/^[a-z][a-z0-9-]{0,20}$/.test(options.stage)) throw new Error("--stage must be a short lowercase name");
   if (options.app && !/^[a-z][a-z0-9-]{0,30}$/.test(options.app)) throw new Error("--app must be a short lowercase name");
 
-  const r = terminal();
   const dir = resolve(options.dir ?? join(homedir(), ".flare-ota", "server"));
   const shown = dir.replace(homedir(), "~");
   const ref = options.ref ?? `v${cliVersion()}`;
-  r.line(`\n  ${c.bold(c.flame("flare-ota"))} ${c.dim("setup")}  ${options.app ?? "flare-ota"} ${c.dim(`· ${options.stage}`)}\n`);
+  r.line(`\n  ${c.bold(c.flame("flare-ota"))} ${c.dim(title)}  ${options.app ?? "flare-ota"} ${c.dim(`· ${options.stage}`)}\n`);
 
   await r.step(
     "Source",
     async (step) => {
       if (existsSync(join(dir, "packages", "server", "cloudflare.config.ts"))) {
-        // Keep an existing checkout at this CLI's version: the server setup must match it.
+        // A clone of your own (a dev checkout, a fork) is never moved: only folders this CLI made.
+        if (!existsSync(join(dir, ".git", MANAGED_MARKER))) return "yours";
+        // Keep a managed checkout at this CLI's version: the server setup must match it.
         // Settings (.env.*) are gitignored, so they survive; local code edits stop the update.
         if (!quiet("git", ["diff", "--quiet", "HEAD"], dir)) return "modified";
         await captured("git", ["fetch", "--depth", "1", "origin", ref], dir, step.update).catch(() => {
@@ -91,10 +95,13 @@ export async function setup(options: SetupOptions): Promise<void> {
       await captured("git", ["clone", "--depth", "1", "--branch", ref, REPO, dir], undefined, step.update).catch(() => {
         throw new Error(`could not fetch ${ref}. Pass --ref main for the latest source.`);
       });
+      writeFileSync(join(dir, ".git", MANAGED_MARKER), `${ref}\n`);
       return "fetched";
     },
     (how) =>
-      how === "modified"
+      how === "yours"
+        ? `${shown} ${c.dim("· your checkout, used as is")}`
+        : how === "modified"
         ? `${shown} ${c.yellow("· local changes, left as is")}`
         : `${ref} ${c.dim(`→ ${shown}${how === "updated" ? " (updated)" : ""}`)}`,
   );
@@ -111,6 +118,12 @@ export async function setup(options: SetupOptions): Promise<void> {
     if (!run("npx", ["--no-install", "cf", "auth", "login"], serverDir)) throw new Error("Cloudflare login failed.");
   }
 
+  return { dir, shown, serverDir };
+}
+
+export async function setup(options: SetupOptions): Promise<void> {
+  const r = terminal();
+  const { shown, serverDir } = await prepareServer(options, "setup", r);
   const forward = ["--stage", options.stage, ...(options.app ? ["--app", options.app] : [])];
   const result = spawnSync("node", [join(serverDir, "scripts", "setup.ts"), ...forward], { cwd: serverDir, stdio: "inherit", env: { ...process.env, FLARE_OTA_SETUP_WRAPPED: "1" } });
   // The server setup already explained what failed and how to resume.

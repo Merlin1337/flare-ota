@@ -2,7 +2,7 @@ import { createHash, X509Certificate } from "node:crypto";
 import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, extname, join } from "node:path";
-import { scopeAllows, type AssetRef, type GroupSummary, type Overview, type Platform, type PlatformUpdateInput, type Scope } from "@flare-ota/core";
+import { compareVersions, FLARE_OTA_VERSION, scopeAllows, type AssetRef, type GroupSummary, type Overview, type Platform, type PlatformUpdateInput, type Scope } from "@flare-ota/core";
 import type { Client } from "./api.ts";
 import { CODE_SIGNING_EKU, probeSignature } from "./doctor.ts";
 import { expoConfig, exportBundles, gitCommit, runtimeVersion } from "./expo.ts";
@@ -107,6 +107,8 @@ interface Whoami {
   actor: string;
   scope: Scope;
   dashboardUrl?: string | null;
+  /** Server release; absent before 0.1.3. */
+  version?: string;
 }
 
 export async function publishUpdate(client: Client, options: PublishOptions): Promise<PublishResult> {
@@ -140,6 +142,9 @@ export async function publishUpdate(client: Client, options: PublishOptions): Pr
       `${new URL(client.options.server).host} ${c.dim(`· ${me.actor} (${me.scope})`)}` +
       (me.serving.length ? c.dim(` · ${me.serving.map((name) => `${name} → ${options.branch}`).join(", ")}`) : ""),
   );
+  if (compareVersions(me.version, FLARE_OTA_VERSION) < 0) {
+    r.warn(`The server runs ${me.version ?? "a release before 0.1.3"}, this CLI is ${FLARE_OTA_VERSION}: \`npx flare-ota upgrade\` brings it up to date.`);
+  }
   if (me.serving.length === 0) {
     r.warn(`No channel serves ${options.branch}: no device gets this update until \`flare-ota channels set <channel> ${options.branch}\`.`);
   }

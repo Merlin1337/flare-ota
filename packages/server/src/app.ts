@@ -1,4 +1,4 @@
-import { ASSET_HASH, NAME, fromBase64url, hex, isPlatform, verifyPreview, type Scope } from "@flare-ota/core";
+import { ASSET_HASH, FLARE_OTA_VERSION, NAME, fromBase64url, hex, isPlatform, verifyPreview, type Scope } from "@flare-ota/core";
 import { Hono, type Context } from "hono";
 import { accessIdentity, allows, bearerPrincipal, type Principal } from "./auth.ts";
 import { dashboard } from "./dashboard.ts";
@@ -76,7 +76,7 @@ export function createApp() {
     await next();
   });
 
-  app.get("/health", (c) => c.json({ ok: true }));
+  app.get("/health", (c) => c.json({ ok: true, version: FLARE_OTA_VERSION }));
 
   // ---- device routes ----
 
@@ -160,7 +160,7 @@ export function createApp() {
   api.get("/whoami", (c) => {
     const principal = requireScope(c, "read");
     // Lets the CLI link a fresh release to its dashboard page.
-    return c.json({ ...principal, dashboardUrl: c.env.DASHBOARD_HOST ? `https://${c.env.DASHBOARD_HOST}` : null });
+    return c.json({ ...principal, dashboardUrl: c.env.DASHBOARD_HOST ? `https://${c.env.DASHBOARD_HOST}` : null, version: FLARE_OTA_VERSION });
   });
 
   api.post("/assets/missing", async (c) => {

@@ -55,6 +55,19 @@ setup yourself, then let the agent take over.
 Back up the signing key now. Installed apps only trust its certificate: losing the key means a
 new store build for everyone.
 
+### Upgrading
+
+```sh
+npm i -D flare-ota@latest          # in your app: the CLI
+npx flare-ota upgrade              # the server, to the CLI's version (--stage, --app as for setup)
+```
+
+`upgrade` moves the server source folder to the new release, applies database migrations and
+redeploys, reusing your settings and the keys in your keychain (or `FLARE_OTA_SIGNING_KEY` /
+`FLARE_OTA_PREVIEW_SECRET` from the environment). No question asked. `publish` and `doctor` tell you
+when the server is older than the CLI. A clone of your own (`--dir` on a dev checkout) is deployed
+as it is, never moved.
+
 ## 2. Connect your app
 
 ```sh

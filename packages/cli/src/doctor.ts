@@ -1,7 +1,7 @@
 import { X509Certificate, verify } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PREVIEW_HEADER } from "@flare-ota/core";
+import { compareVersions, FLARE_OTA_VERSION, PREVIEW_HEADER } from "@flare-ota/core";
 import { Client } from "./api.ts";
 import { expoConfig } from "./expo.ts";
 
@@ -106,6 +106,12 @@ export async function doctor(projectDir: string, client: Client): Promise<Check[
     }
   } else {
     add("token", false, "FLARE_OTA_TOKEN is not set (needed to publish)", true);
+  }
+
+  const health = await fetch(`${client.options.server}/health`).then((r) => (r.ok ? (r.json() as Promise<{ version?: string }>) : null)).catch(() => null);
+  if (health) {
+    const older = compareVersions(health.version, FLARE_OTA_VERSION) < 0;
+    add("server version", !older, older ? `server ${health.version ?? "< 0.1.3"}, CLI ${FLARE_OTA_VERSION}: run \`npx flare-ota upgrade\`` : `${health.version}`, older);
   }
 
   const channel = config?.updates?.requestHeaders?.["expo-channel-name"] ?? "production";

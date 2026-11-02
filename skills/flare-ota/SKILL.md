@@ -53,6 +53,13 @@ Elsewhere it is printed once (`--print` forces that): ask the user to store it i
 manager, never paste it back into the conversation. Tell the user to back up the signing key (`security find-generic-password -s flare-ota.<name>.signing-key-b64 -a flare-ota -w | pbcopy`
 on macOS): losing it means a store build for every user.
 
+## Upgrade
+
+When `publish` or `doctor` says the server is older than the CLI: `npx flare-ota upgrade [--stage …] [--app …]`.
+It redeploys with the existing settings and keychain secrets, applies migrations, then checks
+`/health`. It is a production deploy: ask the user first, and hand it over like setup if your
+permissions block it.
+
 ## Connect an Expo app
 
 1. `npx expo install expo-updates` and `npm i -D flare-ota` in the app.

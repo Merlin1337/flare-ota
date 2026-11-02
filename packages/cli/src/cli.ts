@@ -6,6 +6,7 @@ import { doctor } from "./doctor.ts";
 import { init } from "./init.ts";
 import { serveMcp } from "./mcp.ts";
 import { setup } from "./setup.ts";
+import { upgrade } from "./upgrade.ts";
 import { publishUpdate, type PublishResult } from "./publish.ts";
 import { terminalQr } from "./qr.ts";
 import { c, ReportedError, short, terminal } from "./ui.ts";
@@ -17,6 +18,7 @@ Usage: flare-ota <command> [options]
 Server
   setup [--stage production] [--app <name>] [--dir <path>] [--ref <git ref>]
                                                                   Fetch, install and deploy your server (guided)
+  upgrade [--stage production] [--app <name>] [--dir <path>]      Bring the deployed server to this CLI's version
 
 App setup
   init [--channel production] [--cert ./certs/certificate.pem]   Configure app.json for this server
@@ -145,6 +147,10 @@ async function main() {
   switch (command) {
     case "setup": {
       await setup({ stage: flags.stage ?? "production", ...(flags.app ? { app: flags.app } : {}), ...(flags.dir ? { dir: flags.dir } : {}), ...(flags.ref ? { ref: flags.ref } : {}) });
+      return;
+    }
+    case "upgrade": {
+      await upgrade({ stage: flags.stage ?? "production", ...(flags.app ? { app: flags.app } : {}), ...(flags.dir ? { dir: flags.dir } : {}), ...(flags.ref ? { ref: flags.ref } : {}) });
       return;
     }
     case "init": {
